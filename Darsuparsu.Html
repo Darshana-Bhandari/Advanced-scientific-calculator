@@ -225,3 +225,151 @@
             <span class="theme-swatch" style="width:20px;height:20px;background: linear-gradient(135deg,#7dd3fc,#3b82f6);"></span> ☀️ Sky
           </button>
           <bu
+          <!-- Mode + Stats row -->
+    <div class="flex items-center justify-between mb-2 px-1 text-xs" style="color: var(--text-sub);">
+      <div class="flex items-center gap-2">
+        <button id="sciToggle" class="btn-press px-2 py-1 rounded-lg shadow" style="background: var(--key-bg); color: var(--text-main);">🧠 Scientific</button>
+        <button id="angleMode" title="Toggle degrees/radians" class="btn-press px-2 py-1 rounded-lg shadow font-semibold" style="background: var(--key-bg); color: var(--text-main);">DEG</button>
+        <button id="shortcutsBtn" title="Keyboard shortcuts (press ?)" class="btn-press w-6 h-6 rounded-full shadow" style="background: var(--key-bg); color: var(--text-main);">?</button>
+      </div>
+      <span id="statsLine">Calculations: 0</span>
+    </div>
+ 
+    <!-- Display -->
+    <div class="mb-4 rounded-2xl shadow-inner px-5 py-3 h-28 flex flex-col justify-end relative" style="background: var(--display-bg);">
+      <div id="expressionPreview" class="text-right text-sm h-5 truncate" style="color: var(--text-sub);">&nbsp;</div>
+      <input
+        id="display"
+        type="text"
+        value="0"
+        readonly
+        class="w-full bg-transparent text-right text-4xl font-semibold outline-none truncate"
+        style="color: var(--text-main);"
+      >
+      <button id="copyBtn" title="Copy result" class="absolute top-2 right-2 text-xs px-2 py-1 rounded-lg shadow btn-press" style="background: var(--key-bg); color: var(--text-main);">📋</button>
+    </div>
+ 
+    <!-- Memory row -->
+    <div class="grid grid-cols-4 gap-2 mb-3">
+      <button data-mem="mc" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">MC</button>
+      <button data-mem="mr" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">MR</button>
+      <button data-mem="m+" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">M+</button>
+      <button data-mem="m-" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">M−</button>
+    </div>
+ 
+    <!-- Scientific row (toggleable) -->
+    <div id="sciRow" class="grid grid-cols-4 gap-2 mb-3 hidden">
+      <button data-sci="sqrt" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">√</button>
+      <button data-sci="sq" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">x²</button>
+      <button data-sci="cube" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">x³</button>
+      <button data-value="**" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">xʸ</button>
+      <button data-sci="sin" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">sin</button>
+      <button data-sci="cos" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">cos</button>
+      <button data-sci="tan" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">tan</button>
+      <button data-sci="log" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">log</button>
+      <button data-sci="ln" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">ln</button>
+      <button data-sci="exp" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">eˣ</button>
+      <button data-sci="inv" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">1/x</button>
+      <button data-sci="fact" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">n!</button>
+      <button data-sci="abs" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">|x|</button>
+      <button data-sci="pi" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">π</button>
+      <button data-sci="e" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">e</button>
+      <button data-value="(" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">(</button>
+      <button data-value=")" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">)</button>
+      <button data-sci="pow10" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">10ˣ</button>
+      <button data-value="@rt@" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">ʸ√x</button>
+      <button data-sci="rand" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">Rand</button>
+      <button data-sci="floor" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">⌊x⌋</button>
+      <button data-sci="ceil" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">⌈x⌉</button>
+      <button data-sci="round" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">Round</button>
+    </div>
+ 
+    <!-- Buttons -->
+    <div class="grid grid-cols-4 gap-3">
+ 
+      <button data-action="clear" class="btn-press h-16 rounded-2xl bg-red-400/90 text-white text-lg font-semibold shadow-lg">AC</button>
+      <button data-action="back" class="btn-press h-16 rounded-2xl bg-amber-400/90 text-white text-xl font-semibold shadow-lg">⌫</button>
+      <button data-value="%" class="btn-press h-16 rounded-2xl bg-indigo-400/90 text-white text-xl font-semibold shadow-lg">%</button>
+      <button data-value="/" class="btn-press h-16 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-semibold shadow-lg">÷</button>
+ 
+      <button data-value="7" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">7</button>
+      <button data-value="8" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">8</button>
+      <button data-value="9" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">9</button>
+      <button data-value="*" class="btn-press h-16 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-semibold shadow-lg">×</button>
+ 
+      <button data-value="4" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">4</button>
+      <button data-value="5" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">5</button>
+      <button data-value="6" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">6</button>
+      <button data-value="-" class="btn-press h-16 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-semibold shadow-lg">−</button>
+ 
+      <button data-value="1" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">1</button>
+      <button data-value="2" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">2</button>
+      <button data-value="3" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">3</button>
+      <button data-value="+" class="btn-press h-16 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-semibold shadow-lg">+</button>
+ 
+      <button data-value="0" class="btn-press col-span-2 h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">0</button>
+      <button data-value="." class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">.</button>
+      <button data-action="equals" class="btn-press glow-equals h-16 rounded-2xl bg-gradient-to-r from-cyan-500 to-sky-600 text-white text-xl font-bold">=</button>
+ 
+    </div>
+  </div>
+ 
+  <!-- History side panel -->
+  <div id="historyPanel" class="fixed top-0 right-0 h-full w-[320px] max-w-[85vw] z-50 shadow-2xl p-5 overflow-y-auto"
+       style="background: var(--panel-bg); backdrop-filter: blur(20px);">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold" style="color: var(--text-main);">History</h2>
+      <button id="closeHistory" class="btn-press w-8 h-8 rounded-full shadow" style="background: var(--key-bg); color: var(--text-main);">✕</button>
+    </div>
+ 
+    <!-- Stats dashboard -->
+    <div class="grid grid-cols-2 gap-2 mb-4 text-xs p-3 rounded-2xl" style="background: var(--key-bg); color: var(--text-main);">
+      <div>Total<br><span class="text-base font-bold" id="statTotal">0</span></div>
+      <div>Largest<br><span class="text-base font-bold" id="statLargest">0</span></div>
+      <div>Memory<br><span class="text-base font-bold" id="statMemory">0</span></div>
+      <div>Last used<br><span class="text-sm font-semibold" id="statLast">—</span></div>
+    </div>
+ 
+    <input id="historySearch" placeholder="🔍 Search history..." class="w-full mb-3 px-3 py-2 rounded-xl text-sm outline-none" style="background: var(--key-bg); color: var(--text-main);">
+ 
+    <div class="flex gap-2 mb-4">
+      <button id="exportHistoryBtn" class="btn-press flex-1 text-sm py-2 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">📄 Export</button>
+      <button id="clearHistoryBtn" class="btn-press flex-1 text-sm py-2 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">Clear History</button>
+    </div>
+    <ul id="historyList" class="space-y-2 text-sm"></ul>
+    <p id="emptyHistory" class="text-xs mt-4" style="color: var(--text-sub);">No calculations yet. Your history is saved automatically and will still be here next time you open this calculator.</p>
+  </div>
+ 
+  <!-- Keyboard shortcuts modal -->
+  <div id="shortcutsModal" class="fixed inset-0 z-[60] hidden items-center justify-center" style="background: rgba(0,0,0,0.4);">
+    <div class="fade-in w-[300px] max-w-[85vw] p-6 rounded-2xl shadow-2xl" style="background: var(--panel-bg); backdrop-filter: blur(20px);">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-bold" style="color: var(--text-main);">Keyboard Shortcuts</h3>
+        <button id="closeShortcuts" class="btn-press w-7 h-7 rounded-full shadow" style="background: var(--key-bg); color: var(--text-main);">✕</button>
+      </div>
+      <ul class="text-sm space-y-2" style="color: var(--text-main);">
+        <li><span class="font-semibold">0–9</span> — Numbers</li>
+        <li><span class="font-semibold">+ − × ÷ %</span> — Operators</li>
+        <li><span class="font-semibold">Enter / =</span> — Calculate</li>
+        <li><span class="font-semibold">Backspace</span> — Delete last digit</li>
+        <li><span class="font-semibold">Esc</span> — Clear (AC)</li>
+        <li><span class="font-semibold">?</span> — This cheat sheet</li>
+      </ul>
+    </div>
+  </div>
+ 
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-sm font-medium shadow-lg hidden z-50"
+       style="background: var(--panel-bg); color: var(--text-main);"></div>
+ 
+<script>
+  /* ---------- Welcome screen ---------- */
+  function getGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return "Good Morning 👋";
+    if (h < 18) return "Good Afternoon 👋";
+    if (h < 22) return "Good Evening 👋";
+    return "Good Night 🌙";
+  }
+  document.getElementById("greetingText").textContent = getGreeting();
+ 
