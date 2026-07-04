@@ -254,3 +254,45 @@
   }
   updateClock();
   setInterval(updateClock, 1000 * 30);
+
+  /* ---------- Core elements ---------- */
+  const display = document.getElementById("display");
+  const historyLabel = document.getElementById("history");
+  const historyList = document.getElementById("historyList");
+  const emptyHistory = document.getElementById("emptyHistory");
+  const statsLine = document.getElementById("statsLine");
+  const toast = document.getElementById("toast");
+ 
+  // In-memory history/session store (no localStorage available in this environment,
+  // so this resets on page refresh but works perfectly during your session).
+  let historyStore = [];
+  let calcCount = 0;
+  let memory = 0;
+ 
+  /* ---------- Sound effect (synthesized, no external file needed) ---------- */
+  let audioCtx = null;
+  function playClick() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 720;
+      gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.08);
+    } catch (e) { /* audio not available, ignore */ }
+  }
+ 
+  /* ---------- Toast ---------- */
+  let toastTimer = null;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.remove("hidden");
+    toast.classList.add("toast");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.add("hidden"), 1500);
+  }
