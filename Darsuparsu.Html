@@ -296,3 +296,148 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.add("hidden"), 1500);
   }
+
+  /* ---------- Display helpers ---------- */
+  function appendToDisplay(value) {
+    if (display.value === "0" || display.value === "Error") {
+      display.value = "";
+    }
+    display.value += value;
+  }
+ 
+  function clearDisplay() {
+    display.value = "0";
+    historyLabel.innerHTML = "&nbsp;";
+  }
+ 
+  function backspace() {
+    display.value = display.value.slice(0, -1);
+    if (display.value === "") display.value = "0";
+  }
+ 
+  /* ---------- Safer expression evaluation (no eval) ---------- */
+  function safeEvaluate(expr) {
+    // Only allow digits, operators, parentheses, decimal points and whitespace
+    if (!/^[0-9+\-*/().%\s]*$/.test(expr)) {
+      throw new Error("Invalid characters");
+    }
+    // eslint-disable-next-line no-new-func
+    return Function('"use strict"; return (' + expr + ')')();
+  }
+ 
+  function calculate() {
+    try {
+      let expression = display.value;
+      const rawLabel = expression
+        .replace(/\*/g, "×")
+        .replace(/\//g, "÷")
+        .replace(/-/g, "−");
+ 
+      expression = expression.replace(/×/g, "*");
+      expression = expression.replace(/÷/g, "/");
+      expression = expression.replace(/−/g, "-");
+      expression = expression.replace(/%/g, "/100");
+ 
+      const result = safeEvaluate(expression);
+      historyLabel.textContent = rawLabel;
+      display.value = result;
+      display.classList.add("result-pulse");
+      setTimeout(() => display.classList.remove("result-pulse"), 300);
+ 
+      addToHistory(`${rawLabel} = ${result}`);
+    } catch (error) {
+      display.value = "Error";
+    }
+  }
+ 
+  /* ---------- History panel ---------- */
+  function addToHistory(entry) {
+    historyStore.push(entry);
+    calcCount++;
+    statsLine.textContent = `Calculations: ${calcCount} · Last: ${entry.split("=")[1]?.trim() ?? ""}`;
+    renderHistory();
+  }
+ 
+  function renderHistory() {
+    historyList.innerHTML = "";
+    if (historyStore.length === 0) {
+      emptyHistory.classList.remove("hidden");
+      return;
+    }
+    emptyHistory.classList.add("hidden");
+    // newest first
+    [...historyStore].reverse().forEach((entry) => {
+      const li = document.createElement("li");
+      li.className = "px-3 py-2 rounded-xl shadow cursor-pointer";
+      li.style.background = "var(--key-bg)";
+      li.style.color = "var(--text-main)";
+      li.textContent = entry;
+      li.title = "Click to reuse result";
+      li.addEventListener("click", () => {
+        const result = entry.split("=")[1]?.trim();
+        if (result !== undefined) {
+          display.value = result;
+        }
+      });
+      historyList.appendChild(li);
+    });
+  }
+ 
+  document.getElementById("historyToggle").addEventListener("click", () => {
+    document.getElementById("historyPanel").classList.add("open");
+  });
+  document.getElementById("closeHistory").addEventListener("click", () => {
+    document.getElementById("historyPanel").classList.remove("open");
+  });
+  document.getElementById("clearHistoryBtn").addEventListener("click", () => {
+    historyStore = [];
+    calcCount = 0;
+    statsLine.textContent = "Calculations: 0";
+    renderHistory();
+    showToast("History cleared");
+  });
+ 
+  /* ---------- Copy result ---------- */
+  document.getElementById("copyBtn").addEventListener("click", () => {
+    navigator.clipboard?.writeText(display.value).then(() => showToast("Copied " + display.value));
+  });
+ 
+  /* ---------- Dark mode ---------- */
+  const darkToggle = document.getElementById("darkToggle");
+  darkToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    darkToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
+  });
+ 
+  /* ---------- Scientific panel toggle ---------- */
+  const sciRow = document.getElementById("sciRow");
+  document.getElementById("sciToggle").addEventListener("click", () => {
+    sciRow.classList.toggle("hidden");
+  });
+ 
+  document.querySelectorAll("[data-sci]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const fn = btn.getAttribute("data-sci");
+      try {
+        let current = display.value === "0" ? "" : display.value;
+        let val = parseFloat(current || "0");
+        let result;
+        switch (fn) {
+          case "sqrt": result = Math.sqrt(val); break;
+          case "sq": result = val * val; break;
+          case "sin": result = Math.sin(val); break;
+          case "cos": result = Math.cos(val); break;
+          case "tan": result = Math.tan(val); break;
+          case "log": result = Math.log10(val); break;
+          case "pi": appendToDisplay(Math.PI.toFixed(6)); return;
+          case "e": appendToDisplay(Math.E.toFixed(6)); return;
+        }
+        historyLabel.textContent = `${fn}(${val})`;
+        display.value = result;
+        addToHistory(`${fn}(${val}) = ${result}`);
+      } catch (e) {
+        display.value = "Error";
+      }
+    });
+  });
+ 
