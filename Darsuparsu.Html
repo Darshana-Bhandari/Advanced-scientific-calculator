@@ -614,4 +614,103 @@
     if (diffDays <= 7) return "This Week";
     return "Earlier";
   }
+ function renderHistory(filter = "") {
+    historyList.innerHTML = "";
+    const items = filter
+      ? historyStore.filter(e => e.label.toLowerCase().includes(filter.toLowerCase()))
+      : historyStore;
+ 
+    if (items.length === 0) {
+      emptyHistory.classList.remove("hidden");
+      emptyHistory.textContent = filter
+        ? "No matching calculations found."
+        : "No calculations yet. Your history is saved automatically and will still be here next time you open this calculator.";
+      return;
+    }
+    emptyHistory.classList.add("hidden");
+ 
+    const order = ["Today", "Yesterday", "This Week", "Earlier"];
+    const grouped = {};
+    [...items].reverse().forEach((entry) => {
+      const cat = dateCategory(entry.ts);
+      (grouped[cat] = grouped[cat] || []).push(entry);
+    });
+ 
+    order.forEach((cat) => {
+      if (!grouped[cat]) return;
+      const heading = document.createElement("li");
+      heading.className = "text-xs uppercase tracking-wide font-semibold pt-2 pb-1";
+      heading.style.color = "var(--text-sub)";
+      heading.textContent = cat;
+      historyList.appendChild(heading);
+ 
+      grouped[cat].forEach((entry) => {
+        const li = document.createElement("li");
+        li.className = "px-3 py-2 rounded-xl shadow cursor-pointer";
+        li.style.background = "var(--key-bg)";
+        li.style.color = "var(--text-main)";
+        li.title = "Click to reuse result";
+ 
+        const line1 = document.createElement("div");
+        line1.textContent = entry.label;
+ 
+        const line2 = document.createElement("div");
+        line2.className = "text-xs mt-0.5";
+        line2.style.color = "var(--text-sub)";
+        line2.textContent = entry.ts
+          ? new Date(entry.ts).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+          : "";
+ 
+        li.appendChild(line1);
+        if (entry.ts) li.appendChild(line2);
+ 
+        li.addEventListener("click", () => {
+          display.value = entry.result;
+          updatePreview();
+        });
+        historyList.appendChild(li);
+      });
+    });
+  }
+ 
+  /* ---------- Export history ---------- */
+  document.getElementById("exportHistoryBtn").addEventListener("click", () => {
+    if (historyStore.length === 0) {
+      showToast("No history to export");
+      return;
+    }
+    const lines = historyStore.map(e => e.label).join("\n");
+    const blob = new Blob([lines], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "calculator-history.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("History exported");
+  });
+ 
+  historySearch.addEventListener("input", () => renderHistory(historySearch.value));
+ 
+  document.getElementById("historyToggle").addEventListener("click", () => {
+    document.getElementById("historyPanel").classList.add("open");
+  });
+  document.getElementById("closeHistory").addEventListener("click", () => {
+    document.getElementById("historyPanel").classList.remove("open");
+  });
+  document.getElementById("clearHistoryBtn").addEventListener("click", () => {
+    historyStore = [];
+    calcCount = 0;
+    largestNumber = 0;
+    lastUsed = null;
+    updateStatsUI();
+    renderHistory();
+    saveState();
+    showToast("History cleared");
+  });
+ 
+  /* ---------- Copy result ---------- */
+  document.getElementById("copyBtn").addEventListener("click", () => {
+    navigator.clipboard?.writeText(display.value).then(() => showToast("Copied " + display.value));
+  });
  
