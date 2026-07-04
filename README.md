@@ -161,17 +161,6 @@ cd darsu-smart-calculator
 
 Open `index.html` in your browser.
 
-## Future Improvements
-
-* Unit Converter
-* Currency Converter
-* Graph Plotting
-* Equation Solver
-* Voice Input Support
-* Additional Themes
-* Calculation Export Formats
-
-## Author
 
 Darshana Bhandari
 
