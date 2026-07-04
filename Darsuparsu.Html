@@ -150,3 +150,52 @@
       <div class="flex items-center gap-2">
         <span class="text-2xl">🧮</span>
         <h1 class="text-xl font-bold" style="color: var(--text-main);">Calculator</h1>
+
+        </div>
+      <div class="flex items-center gap-3">
+        <span id="clock" class="text-sm font-medium" style="color: var(--text-sub);"></span>
+        <button id="darkToggle" title="Toggle dark mode" class="btn-press w-8 h-8 rounded-full flex items-center justify-center text-sm shadow" style="background: var(--key-bg); color: var(--text-main);">🌙</button>
+        <button id="historyToggle" title="Show history" class="btn-press w-8 h-8 rounded-full flex items-center justify-center text-sm shadow" style="background: var(--key-bg); color: var(--text-main);">📜</button>
+      </div>
+    </div>
+ 
+    <!-- Mode + Stats row -->
+    <div class="flex items-center justify-between mb-2 px-1 text-xs" style="color: var(--text-sub);">
+      <button id="sciToggle" class="btn-press px-2 py-1 rounded-lg shadow" style="background: var(--key-bg); color: var(--text-main);">🧠 Scientific</button>
+      <span id="statsLine">Calculations: 0</span>
+    </div>
+ 
+    <!-- Display -->
+    <div class="mb-4 rounded-2xl shadow-inner px-5 py-3 h-28 flex flex-col justify-end relative" style="background: var(--display-bg);">
+      <div id="history" class="text-right text-sm h-5 truncate" style="color: var(--text-sub);">&nbsp;</div>
+      <input
+        id="display"
+        type="text"
+        value="0"
+        readonly
+        class="w-full bg-transparent text-right text-4xl font-semibold outline-none truncate"
+        style="color: var(--text-main);"
+      >
+      <button id="copyBtn" title="Copy result" class="absolute top-2 right-2 text-xs px-2 py-1 rounded-lg shadow btn-press" style="background: var(--key-bg); color: var(--text-main);">📋</button>
+    </div>
+ 
+    <!-- Memory row -->
+    <div class="grid grid-cols-4 gap-2 mb-3">
+      <button data-mem="mc" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">MC</button>
+      <button data-mem="mr" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">MR</button>
+      <button data-mem="m+" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">M+</button>
+      <button data-mem="m-" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">M−</button>
+    </div>
+ 
+    <!-- Scientific row (toggleable) -->
+    <div id="sciRow" class="grid grid-cols-4 gap-2 mb-3 hidden">
+      <button data-sci="sqrt" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">√</button>
+      <button data-sci="sq" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">x²</button>
+      <button data-sci="sin" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">sin</button>
+      <button data-sci="cos" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">cos</button>
+      <button data-sci="tan" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">tan</button>
+      <button data-sci="log" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">log</button>
+      <button data-sci="pi" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">π</button>
+      <button data-sci="e" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">e</button>
+    </div>
+ 
