@@ -227,3 +227,30 @@
  
     </div>
   </div>
+  <!-- History side panel -->
+  <div id="historyPanel" class="fixed top-0 right-0 h-full w-[300px] max-w-[85vw] z-50 shadow-2xl p-5 overflow-y-auto"
+       style="background: var(--panel-bg); backdrop-filter: blur(20px);">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold" style="color: var(--text-main);">History</h2>
+      <button id="closeHistory" class="btn-press w-8 h-8 rounded-full shadow" style="background: var(--key-bg); color: var(--text-main);">✕</button>
+    </div>
+    <div class="flex gap-2 mb-4">
+      <button id="clearHistoryBtn" class="btn-press flex-1 text-sm py-2 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">Clear History</button>
+    </div>
+    <ul id="historyList" class="space-y-2 text-sm"></ul>
+    <p id="emptyHistory" class="text-xs mt-4" style="color: var(--text-sub);">No calculations yet. Your session history lives here until you refresh the page.</p>
+  </div>
+ 
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-sm font-medium shadow-lg hidden z-50"
+       style="background: var(--panel-bg); color: var(--text-main);"></div>
+ 
+<script>
+  /* ---------- Clock ---------- */
+  const clockEl = document.getElementById('clock');
+  function updateClock() {
+    const now = new Date();
+    clockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000 * 30);
