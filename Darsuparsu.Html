@@ -821,4 +821,143 @@
         if (result === Infinity || result === -Infinity) return showError("Division by Zero");
         recordResult(label, result);
       } catch (e) 
+       showError("Invalid Expression");
+      }
+    });
+  });
+ 
+  /* ---------- Memory buttons ---------- */
+  document.querySelectorAll("[data-mem]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const action = btn.getAttribute("data-mem");
+      const current = parseFloat(display.value) || 0;
+      if (action === "mc") { memory = 0; showToast("Memory cleared"); }
+      else if (action === "mr") { display.value = memory; updatePreview(); showToast("Recalled " + memory); }
+      else if (action === "m+") { memory += current; showToast("Added to memory: " + memory); }
+      else if (action === "m-") { memory -= current; showToast("Subtracted from memory: " + memory); }
+      updateStatsUI();
+      saveState();
+    });
+  });
+ 
+  /* ---------- Ripple effect ---------- */
+  function createRipple(e, btn) {
+    const rect = btn.getBoundingClientRect();
+    const ripple = document.createElement("span");
+    const size = Math.max(rect.width, rect.height);
+    ripple.classList.add("ripple");
+    ripple.style.width = ripple.style.height = size + "px";
+    const x = (e.clientX ?? rect.left + rect.width / 2) - rect.left - size / 2;
+    const y = (e.clientY ?? rect.top + rect.height / 2) - rect.top - size / 2;
+    ripple.style.left = x + "px";
+    ripple.style.top = y + "px";
+    btn.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  }
+ 
+  function vibrate() {
+    if (navigator.vibrate) navigator.vibrate(20);
+  }
+ 
+  /* ---------- Wire up main buttons ---------- */
+  document.querySelectorAll(".btn-press").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      createRipple(e, btn);
+      playClick();
+      vibrate();
+    });
+  });
+ 
+  document.querySelectorAll("[data-value]").forEach((btn) => {
+    btn.addEventListener("click", () => appendToDisplay(btn.getAttribute("data-value")));
+  });
+ 
+  document.querySelectorAll("[data-action]").forEach((btn) => {
+    const action = btn.getAttribute("data-action");
+    btn.addEventListener("click", () => {
+      if (action === "clear") clearDisplay();
+      else if (action === "back") backspace();
+      else if (action === "equals") calculate();
+    });
+  });
+ 
+  /* ---------- Keyboard support + highlighting ---------- */
+  const keyMap = {
+    "+": '[data-value="+"]',
+    "-": '[data-value="-"]',
+    "*": '[data-value="*"]',
+    "/": '[data-value="/"]',
+    "%": '[data-value="%"]',
+    ".": '[data-value="."]',
+    "Enter": '[data-action="equals"]',
+    "=": '[data-action="equals"]',
+    "Backspace": '[data-action="back"]',
+    "Escape": '[data-action="clear"]',
+  };
+  for (let i = 0; i <= 9; i++) keyMap[i.toString()] = `[data-value="${i}"]`;
+ 
+  function highlightKey(selector) {
+    const btn = document.querySelector(selector);
+    if (!btn) return;
+    btn.classList.add("key-active");
+    setTimeout(() => btn.classList.remove("key-active"), 100);
+  }
+ 
+  document.addEventListener("keydown", function (event) {
+    // don't hijack typing in the history search box
+    if (event.target === historySearch) return;
+    const key = event.key;
+ 
+    if (key >= "0" && key <= "9") {
+      appendToDisplay(key);
+      highlightKey(keyMap[key]);
+      playClick();
+    } else if (key === ".") {
+      appendToDisplay(".");
+      highlightKey(keyMap["."]);
+      playClick();
+    } else if (key === "+") {
+      appendToDisplay("+");
+      highlightKey(keyMap["+"]);
+      playClick();
+    } else if (key === "-") {
+      appendToDisplay("-");
+      highlightKey(keyMap["-"]);
+      playClick();
+    } else if (key === "*") {
+      appendToDisplay("*");
+      highlightKey(keyMap["*"]);
+      playClick();
+    } else if (key === "/") {
+      appendToDisplay("/");
+      highlightKey(keyMap["/"]);
+      playClick();
+    } else if (key === "%") {
+      appendToDisplay("%");
+      highlightKey(keyMap["%"]);
+      playClick();
+    } else if (key === "Enter" || key === "=") {
+      event.preventDefault();
+      calculate();
+      highlightKey(keyMap["Enter"]);
+      playClick();
+    } else if (key === "Backspace") {
+      backspace();
+      highlightKey(keyMap["Backspace"]);
+      playClick();
+    } else if (key === "Escape") {
+      clearDisplay();
+      highlightKey(keyMap["Escape"]);
+      playClick();
+    } else if (key === "?") {
+      openShortcuts();
+    }
+  });
+ 
+  /* Initial load */
+  loadState();
+  updatePreview();
+</script>
+</body>
+</html>
  
