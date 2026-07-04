@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Darsu Calculator</title>
- 
+<title>Calculator</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
- 
+
 <style>
   * { font-family: 'Poppins', sans-serif; box-sizing: border-box; }
- 
+
   :root {
     --bg-a: #7dd3fc;
     --bg-b: #38bdf8;
@@ -23,12 +23,23 @@
     --text-sub: rgba(30,41,59,0.6);
     --key-bg: rgba(255,255,255,0.4);
     --panel-bg: rgba(255,255,255,0.55);
+    --accent: #0891b2;
   }
- 
-  body.dark {
-    --bg-a: #0f172a;
-    --bg-b: #1e293b;
-    --bg-c: #0b1120;
+
+  body[data-theme="sky"] {
+    --bg-a: #7dd3fc; --bg-b: #38bdf8; --bg-c: #3b82f6; --accent: #0891b2;
+  }
+  body[data-theme="purple"] {
+    --bg-a: #ddd6fe; --bg-b: #a78bfa; --bg-c: #7c3aed; --accent: #8b5cf6;
+  }
+  body[data-theme="green"] {
+    --bg-a: #bbf7d0; --bg-b: #4ade80; --bg-c: #15803d; --accent: #16a34a;
+  }
+  body[data-theme="sunset"] {
+    --bg-a: #fed7aa; --bg-b: #fb923c; --bg-c: #c2410c; --accent: #ea580c;
+  }
+  body[data-theme="dark"] {
+    --bg-a: #0f172a; --bg-b: #1e293b; --bg-c: #0b1120;
     --glass: rgba(15,23,42,0.55);
     --glass-border: rgba(148,163,184,0.25);
     --display-bg: rgba(15,23,42,0.6);
@@ -36,19 +47,20 @@
     --text-sub: rgba(226,232,240,0.55);
     --key-bg: rgba(148,163,184,0.15);
     --panel-bg: rgba(15,23,42,0.9);
+    --accent: #22d3ee;
   }
- 
+
   body {
     background: linear-gradient(135deg, var(--bg-a), var(--bg-b), var(--bg-c));
     transition: background 0.5s ease;
   }
- 
+
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(24px) scale(0.97); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
   .fade-in { animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
- 
+
   @keyframes floatSlow {
     0%, 100% { transform: translate(0, 0); }
     50%      { transform: translate(20px, -25px); }
@@ -59,7 +71,7 @@
   }
   .float-a { animation: floatSlow 9s ease-in-out infinite; }
   .float-b { animation: floatSlow2 11s ease-in-out infinite; }
- 
+
   .btn-press {
     transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
     position: relative;
@@ -71,11 +83,10 @@
     transform: scale(0.90);
     filter: brightness(1.15);
   }
- 
+
   .glow-equals { box-shadow: 0 0 22px rgba(6,182,212,0.55), 0 8px 20px rgba(0,0,0,0.15); }
   .glow-equals:hover { box-shadow: 0 0 32px rgba(6,182,212,0.75), 0 10px 24px rgba(0,0,0,0.18); }
- 
-  /* Ripple effect */
+
   .ripple {
     position: absolute;
     border-radius: 50%;
@@ -87,16 +98,14 @@
   @keyframes rippleAnim {
     to { transform: scale(3); opacity: 0; }
   }
- 
-  /* Result pulse */
+
   @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.04); }
     100% { transform: scale(1); }
   }
   .result-pulse { animation: pulse 0.3s ease; }
- 
-  /* Glass reflection sweep */
+
   .calc-card { position: relative; overflow: hidden; }
   .calc-card::before {
     content: "";
@@ -115,59 +124,114 @@
     45%  { left: 140%; }
     100% { left: 140%; }
   }
- 
-  /* History panel slide */
+
   #historyPanel {
     transform: translateX(110%);
     transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
   }
   #historyPanel.open { transform: translateX(0); }
- 
+
+  #themePanel {
+    transform: translateY(-8px) scale(0.95);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+  }
+  #themePanel.open {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.5); border-radius: 10px; }
- 
-  .sci-btn { font-size: 0.95rem; }
- 
+
+  .sci-btn { font-size: 0.85rem; }
+
   .toast {
     animation: fadeInUp 0.3s ease both;
   }
+
+  .theme-swatch {
+    width: 30px; height: 30px; border-radius: 9999px;
+    border: 2px solid rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .theme-swatch:hover { transform: scale(1.15); }
+  .theme-swatch.active { box-shadow: 0 0 0 2px var(--accent); }
+
+  /* Welcome screen */
+  #welcomeScreen {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--bg-a), var(--bg-b), var(--bg-c));
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+  }
+  #welcomeScreen.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
+  #calcWrapper { opacity: 0; transform: scale(0.94); transition: all 0.6s cubic-bezier(0.16,1,0.3,1); }
+  #calcWrapper.revealed { opacity: 1; transform: scale(1); }
+
+  #expressionPreview {
+    min-height: 1.1rem;
+  }
 </style>
 </head>
- 
-<body class="min-h-screen flex items-center justify-center relative overflow-hidden">
- 
+
+<body data-theme="sky" class="min-h-screen flex items-center justify-center relative overflow-hidden">
+
+  <!-- Welcome screen -->
+  <div id="welcomeScreen">
+    <div class="fade-in text-center px-6">
+      <div class="text-5xl mb-4">⚡</div>
+      <h1 id="greetingText" class="text-3xl font-bold mb-2" style="color:#1e293b;">Good Evening 👋</h1>
+      <p class="text-lg mb-8" style="color:rgba(30,41,59,0.7);">Ready to calculate?</p>
+      <button id="startBtn" class="btn-press px-8 py-3 rounded-2xl text-lg font-semibold shadow-lg text-white bg-gradient-to-r from-cyan-500 to-sky-600">
+        Start Calculating →
+      </button>
+    </div>
+  </div>
+
   <!-- Floating background shapes -->
   <div class="absolute w-72 h-72 bg-blue-300 rounded-full blur-3xl opacity-40 top-10 left-10 float-a"></div>
   <div class="absolute w-72 h-72 bg-cyan-300 rounded-full blur-3xl opacity-40 bottom-10 right-10 float-b"></div>
   <div class="absolute w-56 h-56 bg-white rounded-full blur-3xl opacity-30 top-1/2 right-1/4 float-a"></div>
- 
+
   <!-- Calculator -->
-  <div class="fade-in calc-card relative w-[400px] max-w-[92vw] backdrop-blur-2xl border rounded-[2rem] shadow-[0_8px_40px_rgba(0,0,0,0.2)] p-6"
+  <div id="calcWrapper" class="calc-card relative w-[400px] max-w-[92vw] backdrop-blur-2xl border rounded-[2rem] shadow-[0_8px_40px_rgba(0,0,0,0.2)] p-6"
        style="background: var(--glass); border-color: var(--glass-border);">
- 
+
     <!-- Header -->
     <div class="flex items-center justify-between mb-4 px-1">
       <div class="flex items-center gap-2">
-        <span class="text-2xl">🧮</span>
+        <span class="text-2xl">⚡</span>
         <h1 class="text-xl font-bold" style="color: var(--text-main);">Calculator</h1>
-
-        </div>
-      <div class="flex items-center gap-3">
+      </div>
+      <div class="flex items-center gap-3 relative">
         <span id="clock" class="text-sm font-medium" style="color: var(--text-sub);"></span>
-        <button id="darkToggle" title="Toggle dark mode" class="btn-press w-8 h-8 rounded-full flex items-center justify-center text-sm shadow" style="background: var(--key-bg); color: var(--text-main);">🌙</button>
+        <button id="themeToggle" title="Themes" class="btn-press w-8 h-8 rounded-full flex items-center justify-center text-sm shadow" style="background: var(--key-bg); color: var(--text-main);">🎨</button>
         <button id="historyToggle" title="Show history" class="btn-press w-8 h-8 rounded-full flex items-center justify-center text-sm shadow" style="background: var(--key-bg); color: var(--text-main);">📜</button>
+
+        <!-- Theme dropdown -->
+        <div id="themePanel" class="absolute top-10 right-0 z-40 p-3 rounded-2xl shadow-2xl flex gap-2" style="background: var(--panel-bg); backdrop-filter: blur(20px);">
+          <button data-theme-choice="sky" class="theme-swatch" style="background: linear-gradient(135deg,#7dd3fc,#3b82f6);" title="Sky Blue"></button>
+          <button data-theme-choice="purple" class="theme-swatch" style="background: linear-gradient(135deg,#ddd6fe,#7c3aed);" title="Purple"></button>
+          <button data-theme-choice="green" class="theme-swatch" style="background: linear-gradient(135deg,#bbf7d0,#15803d);" title="Green"></button>
+          <button data-theme-choice="sunset" class="theme-swatch" style="background: linear-gradient(135deg,#fed7aa,#c2410c);" title="Sunset Orange"></button>
+          <button data-theme-choice="dark" class="theme-swatch" style="background: linear-gradient(135deg,#1e293b,#0b1120);" title="Dark"></button>
+        </div>
       </div>
     </div>
- 
+
     <!-- Mode + Stats row -->
     <div class="flex items-center justify-between mb-2 px-1 text-xs" style="color: var(--text-sub);">
       <button id="sciToggle" class="btn-press px-2 py-1 rounded-lg shadow" style="background: var(--key-bg); color: var(--text-main);">🧠 Scientific</button>
       <span id="statsLine">Calculations: 0</span>
     </div>
- 
+
     <!-- Display -->
     <div class="mb-4 rounded-2xl shadow-inner px-5 py-3 h-28 flex flex-col justify-end relative" style="background: var(--display-bg);">
-      <div id="history" class="text-right text-sm h-5 truncate" style="color: var(--text-sub);">&nbsp;</div>
+      <div id="expressionPreview" class="text-right text-sm h-5 truncate" style="color: var(--text-sub);">&nbsp;</div>
       <input
         id="display"
         type="text"
@@ -178,7 +242,7 @@
       >
       <button id="copyBtn" title="Copy result" class="absolute top-2 right-2 text-xs px-2 py-1 rounded-lg shadow btn-press" style="background: var(--key-bg); color: var(--text-main);">📋</button>
     </div>
- 
+
     <!-- Memory row -->
     <div class="grid grid-cols-4 gap-2 mb-3">
       <button data-mem="mc" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">MC</button>
@@ -186,66 +250,100 @@
       <button data-mem="m+" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">M+</button>
       <button data-mem="m-" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">M−</button>
     </div>
- 
+
     <!-- Scientific row (toggleable) -->
     <div id="sciRow" class="grid grid-cols-4 gap-2 mb-3 hidden">
       <button data-sci="sqrt" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">√</button>
       <button data-sci="sq" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">x²</button>
+      <button data-sci="cube" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">x³</button>
+      <button data-value="**" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">xʸ</button>
       <button data-sci="sin" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">sin</button>
       <button data-sci="cos" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">cos</button>
       <button data-sci="tan" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">tan</button>
       <button data-sci="log" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">log</button>
+      <button data-sci="ln" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">ln</button>
+      <button data-sci="exp" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">eˣ</button>
+      <button data-sci="inv" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">1/x</button>
+      <button data-sci="fact" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">n!</button>
+      <button data-sci="abs" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">|x|</button>
       <button data-sci="pi" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">π</button>
       <button data-sci="e" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">e</button>
     </div>
- <!-- Buttons -->
+
+    <!-- Buttons -->
     <div class="grid grid-cols-4 gap-3">
- 
+
       <button data-action="clear" class="btn-press h-16 rounded-2xl bg-red-400/90 text-white text-lg font-semibold shadow-lg">AC</button>
       <button data-action="back" class="btn-press h-16 rounded-2xl bg-amber-400/90 text-white text-xl font-semibold shadow-lg">⌫</button>
       <button data-value="%" class="btn-press h-16 rounded-2xl bg-indigo-400/90 text-white text-xl font-semibold shadow-lg">%</button>
       <button data-value="/" class="btn-press h-16 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-semibold shadow-lg">÷</button>
- 
+
       <button data-value="7" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">7</button>
       <button data-value="8" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">8</button>
       <button data-value="9" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">9</button>
       <button data-value="*" class="btn-press h-16 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-semibold shadow-lg">×</button>
- 
+
       <button data-value="4" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">4</button>
       <button data-value="5" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">5</button>
       <button data-value="6" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">6</button>
       <button data-value="-" class="btn-press h-16 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-semibold shadow-lg">−</button>
- 
+
       <button data-value="1" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">1</button>
       <button data-value="2" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">2</button>
       <button data-value="3" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">3</button>
       <button data-value="+" class="btn-press h-16 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-semibold shadow-lg">+</button>
- 
+
       <button data-value="0" class="btn-press col-span-2 h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">0</button>
       <button data-value="." class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">.</button>
       <button data-action="equals" class="btn-press glow-equals h-16 rounded-2xl bg-gradient-to-r from-cyan-500 to-sky-600 text-white text-xl font-bold">=</button>
- 
+
     </div>
   </div>
+
   <!-- History side panel -->
-  <div id="historyPanel" class="fixed top-0 right-0 h-full w-[300px] max-w-[85vw] z-50 shadow-2xl p-5 overflow-y-auto"
+  <div id="historyPanel" class="fixed top-0 right-0 h-full w-[320px] max-w-[85vw] z-50 shadow-2xl p-5 overflow-y-auto"
        style="background: var(--panel-bg); backdrop-filter: blur(20px);">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-bold" style="color: var(--text-main);">History</h2>
       <button id="closeHistory" class="btn-press w-8 h-8 rounded-full shadow" style="background: var(--key-bg); color: var(--text-main);">✕</button>
     </div>
+
+    <!-- Stats dashboard -->
+    <div class="grid grid-cols-2 gap-2 mb-4 text-xs p-3 rounded-2xl" style="background: var(--key-bg); color: var(--text-main);">
+      <div>Total<br><span class="text-base font-bold" id="statTotal">0</span></div>
+      <div>Largest<br><span class="text-base font-bold" id="statLargest">0</span></div>
+      <div>Memory<br><span class="text-base font-bold" id="statMemory">0</span></div>
+      <div>Last used<br><span class="text-sm font-semibold" id="statLast">—</span></div>
+    </div>
+
+    <input id="historySearch" placeholder="🔍 Search history..." class="w-full mb-3 px-3 py-2 rounded-xl text-sm outline-none" style="background: var(--key-bg); color: var(--text-main);">
+
     <div class="flex gap-2 mb-4">
       <button id="clearHistoryBtn" class="btn-press flex-1 text-sm py-2 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">Clear History</button>
     </div>
     <ul id="historyList" class="space-y-2 text-sm"></ul>
-    <p id="emptyHistory" class="text-xs mt-4" style="color: var(--text-sub);">No calculations yet. Your session history lives here until you refresh the page.</p>
+    <p id="emptyHistory" class="text-xs mt-4" style="color: var(--text-sub);">No calculations yet. Your history is saved automatically and will still be here next time you open this calculator.</p>
   </div>
- 
+
   <!-- Toast -->
   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-sm font-medium shadow-lg hidden z-50"
        style="background: var(--panel-bg); color: var(--text-main);"></div>
- 
+
 <script>
+  /* ---------- Welcome screen ---------- */
+  function getGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return "Good Morning 👋";
+    if (h < 18) return "Good Afternoon 👋";
+    return "Good Evening 👋";
+  }
+  document.getElementById("greetingText").textContent = getGreeting();
+
+  document.getElementById("startBtn").addEventListener("click", () => {
+    document.getElementById("welcomeScreen").classList.add("fade-out");
+    document.getElementById("calcWrapper").classList.add("revealed");
+  });
+
   /* ---------- Clock ---------- */
   const clockEl = document.getElementById('clock');
   function updateClock() {
@@ -257,19 +355,61 @@
 
   /* ---------- Core elements ---------- */
   const display = document.getElementById("display");
-  const historyLabel = document.getElementById("history");
+  const previewLabel = document.getElementById("expressionPreview");
   const historyList = document.getElementById("historyList");
   const emptyHistory = document.getElementById("emptyHistory");
   const statsLine = document.getElementById("statsLine");
   const toast = document.getElementById("toast");
- 
-  // In-memory history/session store (no localStorage available in this environment,
-  // so this resets on page refresh but works perfectly during your session).
+  const statTotal = document.getElementById("statTotal");
+  const statLargest = document.getElementById("statLargest");
+  const statMemory = document.getElementById("statMemory");
+  const statLast = document.getElementById("statLast");
+  const historySearch = document.getElementById("historySearch");
+
   let historyStore = [];
   let calcCount = 0;
   let memory = 0;
- 
-  /* ---------- Sound effect (synthesized, no external file needed) ---------- */
+  let largestNumber = 0;
+  let lastUsed = null;
+
+  /* ---------- Persistent storage ---------- */
+  async function loadState() {
+    try {
+      const res = await window.storage.get('calc-state', false);
+      if (res && res.value) {
+        const data = JSON.parse(res.value);
+        historyStore = data.historyStore || [];
+        calcCount = data.calcCount || 0;
+        memory = data.memory || 0;
+        largestNumber = data.largestNumber || 0;
+        lastUsed = data.lastUsed || null;
+      }
+    } catch (e) {
+      // no saved state yet, that's fine
+    }
+    renderHistory();
+    updateStatsUI();
+  }
+
+  async function saveState() {
+    try {
+      await window.storage.set('calc-state', JSON.stringify({
+        historyStore, calcCount, memory, largestNumber, lastUsed
+      }));
+    } catch (e) {
+      console.error("Could not save calculator state:", e);
+    }
+  }
+
+  function updateStatsUI() {
+    statTotal.textContent = calcCount;
+    statLargest.textContent = largestNumber;
+    statMemory.textContent = memory;
+    statLast.textContent = lastUsed || "—";
+    statsLine.textContent = `Calculations: ${calcCount}`;
+  }
+
+  /* ---------- Sound effect ---------- */
   let audioCtx = null;
   function playClick() {
     try {
@@ -286,7 +426,7 @@
       osc.stop(audioCtx.currentTime + 0.08);
     } catch (e) { /* audio not available, ignore */ }
   }
- 
+
   /* ---------- Toast ---------- */
   let toastTimer = null;
   function showToast(msg) {
@@ -297,76 +437,100 @@
     toastTimer = setTimeout(() => toast.classList.add("hidden"), 1500);
   }
 
+  /* ---------- Expression preview ---------- */
+  function formatExpression(expr) {
+    if (!expr || expr === "0" || expr === "Error") return "\u00A0";
+    return expr
+      .replace(/\*\*/g, " ^ ")
+      .replace(/\*/g, " × ")
+      .replace(/\//g, " ÷ ")
+      .replace(/-/g, " − ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  function updatePreview() {
+    previewLabel.textContent = formatExpression(display.value);
+  }
+
   /* ---------- Display helpers ---------- */
   function appendToDisplay(value) {
     if (display.value === "0" || display.value === "Error") {
       display.value = "";
     }
     display.value += value;
+    updatePreview();
   }
- 
+
   function clearDisplay() {
     display.value = "0";
-    historyLabel.innerHTML = "&nbsp;";
+    updatePreview();
   }
- 
+
   function backspace() {
     display.value = display.value.slice(0, -1);
     if (display.value === "") display.value = "0";
+    updatePreview();
   }
- 
+
   /* ---------- Safer expression evaluation (no eval) ---------- */
   function safeEvaluate(expr) {
-    // Only allow digits, operators, parentheses, decimal points and whitespace
     if (!/^[0-9+\-*/().%\s]*$/.test(expr)) {
       throw new Error("Invalid characters");
     }
     // eslint-disable-next-line no-new-func
     return Function('"use strict"; return (' + expr + ')')();
   }
- 
+
+  function recordResult(rawLabel, result) {
+    display.value = result;
+    display.classList.add("result-pulse");
+    setTimeout(() => display.classList.remove("result-pulse"), 300);
+    addToHistory(`${rawLabel} = ${result}`, result);
+  }
+
   function calculate() {
     try {
       let expression = display.value;
-      const rawLabel = expression
-        .replace(/\*/g, "×")
-        .replace(/\//g, "÷")
-        .replace(/-/g, "−");
- 
-      expression = expression.replace(/×/g, "*");
-      expression = expression.replace(/÷/g, "/");
-      expression = expression.replace(/−/g, "-");
+      const rawLabel = formatExpression(expression);
+
       expression = expression.replace(/%/g, "/100");
- 
+
       const result = safeEvaluate(expression);
-      historyLabel.textContent = rawLabel;
-      display.value = result;
-      display.classList.add("result-pulse");
-      setTimeout(() => display.classList.remove("result-pulse"), 300);
- 
-      addToHistory(`${rawLabel} = ${result}`);
+      recordResult(rawLabel, result);
     } catch (error) {
       display.value = "Error";
+      updatePreview();
     }
   }
- 
+
   /* ---------- History panel ---------- */
-  function addToHistory(entry) {
+  function addToHistory(entry, result) {
     historyStore.push(entry);
     calcCount++;
-    statsLine.textContent = `Calculations: ${calcCount} · Last: ${entry.split("=")[1]?.trim() ?? ""}`;
-    renderHistory();
+    lastUsed = new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+    const num = Math.abs(parseFloat(result));
+    if (!isNaN(num) && num > largestNumber) largestNumber = num;
+    updateStatsUI();
+    renderHistory(historySearch.value);
+    saveState();
   }
- 
-  function renderHistory() {
+
+  function renderHistory(filter = "") {
     historyList.innerHTML = "";
-    if (historyStore.length === 0) {
+    const items = filter
+      ? historyStore.filter(e => e.toLowerCase().includes(filter.toLowerCase()))
+      : historyStore;
+
+    if (items.length === 0) {
       emptyHistory.classList.remove("hidden");
+      emptyHistory.textContent = filter
+        ? "No matching calculations found."
+        : "No calculations yet. Your history is saved automatically and will still be here next time you open this calculator.";
       return;
     }
     emptyHistory.classList.add("hidden");
-    // newest first
-    [...historyStore].reverse().forEach((entry) => {
+
+    [...items].reverse().forEach((entry) => {
       const li = document.createElement("li");
       li.className = "px-3 py-2 rounded-xl shadow cursor-pointer";
       li.style.background = "var(--key-bg)";
@@ -377,12 +541,15 @@
         const result = entry.split("=")[1]?.trim();
         if (result !== undefined) {
           display.value = result;
+          updatePreview();
         }
       });
       historyList.appendChild(li);
     });
   }
- 
+
+  historySearch.addEventListener("input", () => renderHistory(historySearch.value));
+
   document.getElementById("historyToggle").addEventListener("click", () => {
     document.getElementById("historyPanel").classList.add("open");
   });
@@ -392,29 +559,54 @@
   document.getElementById("clearHistoryBtn").addEventListener("click", () => {
     historyStore = [];
     calcCount = 0;
-    statsLine.textContent = "Calculations: 0";
+    largestNumber = 0;
+    lastUsed = null;
+    updateStatsUI();
     renderHistory();
+    saveState();
     showToast("History cleared");
   });
- 
+
   /* ---------- Copy result ---------- */
   document.getElementById("copyBtn").addEventListener("click", () => {
     navigator.clipboard?.writeText(display.value).then(() => showToast("Copied " + display.value));
   });
- 
-  /* ---------- Dark mode ---------- */
-  const darkToggle = document.getElementById("darkToggle");
-  darkToggle.addEventListener("click", () => {
-    document.body.classList.toggle("dark");
-    darkToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
+
+  /* ---------- Theme selector ---------- */
+  const themeToggle = document.getElementById("themeToggle");
+  const themePanel = document.getElementById("themePanel");
+  themeToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    themePanel.classList.toggle("open");
   });
- 
+  document.addEventListener("click", (e) => {
+    if (!themePanel.contains(e.target) && e.target !== themeToggle) {
+      themePanel.classList.remove("open");
+    }
+  });
+  document.querySelectorAll("[data-theme-choice]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const theme = btn.getAttribute("data-theme-choice");
+      document.body.dataset.theme = theme;
+      themePanel.classList.remove("open");
+      showToast("Theme: " + theme.charAt(0).toUpperCase() + theme.slice(1));
+    });
+  });
+
   /* ---------- Scientific panel toggle ---------- */
   const sciRow = document.getElementById("sciRow");
   document.getElementById("sciToggle").addEventListener("click", () => {
     sciRow.classList.toggle("hidden");
   });
- 
+
+  function factorial(n) {
+    if (n < 0 || !Number.isInteger(n)) return NaN;
+    if (n > 170) return Infinity;
+    let r = 1;
+    for (let i = 2; i <= n; i++) r *= i;
+    return r;
+  }
+
   document.querySelectorAll("[data-sci]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const fn = btn.getAttribute("data-sci");
@@ -422,37 +614,45 @@
         let current = display.value === "0" ? "" : display.value;
         let val = parseFloat(current || "0");
         let result;
+        let label;
         switch (fn) {
-          case "sqrt": result = Math.sqrt(val); break;
-          case "sq": result = val * val; break;
-          case "sin": result = Math.sin(val); break;
-          case "cos": result = Math.cos(val); break;
-          case "tan": result = Math.tan(val); break;
-          case "log": result = Math.log10(val); break;
+          case "sqrt": result = Math.sqrt(val); label = `√(${val})`; break;
+          case "sq": result = val * val; label = `${val}²`; break;
+          case "cube": result = val * val * val; label = `${val}³`; break;
+          case "sin": result = Math.sin(val); label = `sin(${val})`; break;
+          case "cos": result = Math.cos(val); label = `cos(${val})`; break;
+          case "tan": result = Math.tan(val); label = `tan(${val})`; break;
+          case "log": result = Math.log10(val); label = `log(${val})`; break;
+          case "ln": result = Math.log(val); label = `ln(${val})`; break;
+          case "exp": result = Math.exp(val); label = `e^${val}`; break;
+          case "inv": result = 1 / val; label = `1/${val}`; break;
+          case "fact": result = factorial(val); label = `${val}!`; break;
+          case "abs": result = Math.abs(val); label = `|${val}|`; break;
           case "pi": appendToDisplay(Math.PI.toFixed(6)); return;
           case "e": appendToDisplay(Math.E.toFixed(6)); return;
         }
-        historyLabel.textContent = `${fn}(${val})`;
-        display.value = result;
-        addToHistory(`${fn}(${val}) = ${result}`);
+        recordResult(label, result);
       } catch (e) {
         display.value = "Error";
+        updatePreview();
       }
     });
   });
- 
-/* ---------- Memory buttons ---------- */
+
+  /* ---------- Memory buttons ---------- */
   document.querySelectorAll("[data-mem]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const action = btn.getAttribute("data-mem");
       const current = parseFloat(display.value) || 0;
       if (action === "mc") { memory = 0; showToast("Memory cleared"); }
-      else if (action === "mr") { display.value = memory; showToast("Recalled " + memory); }
+      else if (action === "mr") { display.value = memory; updatePreview(); showToast("Recalled " + memory); }
       else if (action === "m+") { memory += current; showToast("Added to memory: " + memory); }
       else if (action === "m-") { memory -= current; showToast("Subtracted from memory: " + memory); }
+      updateStatsUI();
+      saveState();
     });
   });
- 
+
   /* ---------- Ripple effect ---------- */
   function createRipple(e, btn) {
     const rect = btn.getBoundingClientRect();
@@ -467,11 +667,11 @@
     btn.appendChild(ripple);
     setTimeout(() => ripple.remove(), 600);
   }
- 
+
   function vibrate() {
     if (navigator.vibrate) navigator.vibrate(20);
   }
- 
+
   /* ---------- Wire up main buttons ---------- */
   document.querySelectorAll(".btn-press").forEach((btn) => {
     btn.addEventListener("click", (e) => {
@@ -480,11 +680,11 @@
       vibrate();
     });
   });
- 
+
   document.querySelectorAll("[data-value]").forEach((btn) => {
     btn.addEventListener("click", () => appendToDisplay(btn.getAttribute("data-value")));
   });
- 
+
   document.querySelectorAll("[data-action]").forEach((btn) => {
     const action = btn.getAttribute("data-action");
     btn.addEventListener("click", () => {
@@ -493,7 +693,7 @@
       else if (action === "equals") calculate();
     });
   });
- 
+
   /* ---------- Keyboard support + highlighting ---------- */
   const keyMap = {
     "+": '[data-value="+"]',
@@ -508,17 +708,19 @@
     "Escape": '[data-action="clear"]',
   };
   for (let i = 0; i <= 9; i++) keyMap[i.toString()] = `[data-value="${i}"]`;
- 
+
   function highlightKey(selector) {
     const btn = document.querySelector(selector);
     if (!btn) return;
     btn.classList.add("key-active");
     setTimeout(() => btn.classList.remove("key-active"), 100);
   }
- 
+
   document.addEventListener("keydown", function (event) {
+    // don't hijack typing in the history search box
+    if (event.target === historySearch) return;
     const key = event.key;
- 
+
     if (key >= "0" && key <= "9") {
       appendToDisplay(key);
       highlightKey(keyMap[key]);
@@ -532,15 +734,15 @@
       highlightKey(keyMap["+"]);
       playClick();
     } else if (key === "-") {
-      appendToDisplay("−");
+      appendToDisplay("-");
       highlightKey(keyMap["-"]);
       playClick();
     } else if (key === "*") {
-      appendToDisplay("×");
+      appendToDisplay("*");
       highlightKey(keyMap["*"]);
       playClick();
     } else if (key === "/") {
-      appendToDisplay("÷");
+      appendToDisplay("/");
       highlightKey(keyMap["/"]);
       playClick();
     } else if (key === "%") {
@@ -563,8 +765,9 @@
     }
   });
 
-    /* Initial render */
-  renderHistory();
+  /* Initial load */
+  loadState();
+  updatePreview();
 </script>
 </body>
 </html>
