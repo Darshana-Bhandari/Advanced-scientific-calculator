@@ -5,13 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calculator</title>
 
+<!-- Tailwind CSS via CDN (utility classes used throughout the markup) -->
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Google Fonts: Poppins is the single font family used across the app -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
+  /* ==========================================================================
+     Global reset / base font
+     ========================================================================== */
   * { font-family: 'Poppins', sans-serif; box-sizing: border-box; }
 
+  /* ==========================================================================
+     Theme system
+     Each theme is expressed purely as CSS custom properties, so switching
+     themes only ever means swapping the `data-theme` attribute on <body>.
+     -------------------------------------------------------------------------
+     --bg-a / --bg-b / --bg-c : the 3-stop background gradient
+     --glass / --glass-border : the frosted-glass calculator card
+     --display-bg             : background of the numeric display
+     --text-main / --text-sub : primary / secondary text colors
+     --key-bg                 : background of non-operator buttons
+     --panel-bg               : background of side panels / dropdowns / modal
+     --accent                 : highlight color (glow, active states)
+     ========================================================================== */
   :root {
     --bg-a: #7dd3fc;
     --bg-b: #38bdf8;
@@ -26,6 +44,7 @@
     --accent: #0891b2;
   }
 
+  /* Default / explicit "sky" theme (same values as :root) */
   body[data-theme="sky"] {
     --bg-a: #7dd3fc; --bg-b: #38bdf8; --bg-c: #3b82f6; --accent: #0891b2;
   }
@@ -38,6 +57,7 @@
   body[data-theme="sunset"] {
     --bg-a: #fed7aa; --bg-b: #fb923c; --bg-c: #c2410c; --accent: #ea580c;
   }
+  /* Dark theme also overrides glass/text/panel variables, not just the gradient */
   body[data-theme="dark"] {
     --bg-a: #0f172a; --bg-b: #1e293b; --bg-c: #0b1120;
     --glass: rgba(15,23,42,0.55);
@@ -52,15 +72,21 @@
 
   body {
     background: linear-gradient(135deg, var(--bg-a), var(--bg-b), var(--bg-c));
-    transition: background 0.5s ease;
+    transition: background 0.5s ease; /* smooth crossfade when switching themes */
   }
 
+  /* ==========================================================================
+     Reusable animations
+     ========================================================================== */
+
+  /* Generic "fade + rise" entrance used for the welcome text and modals */
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(24px) scale(0.97); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
   .fade-in { animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
+  /* Slow ambient drift for the decorative background blobs */
   @keyframes floatSlow {
     0%, 100% { transform: translate(0, 0); }
     50%      { transform: translate(20px, -25px); }
@@ -72,21 +98,25 @@
   .float-a { animation: floatSlow 9s ease-in-out infinite; }
   .float-b { animation: floatSlow2 11s ease-in-out infinite; }
 
+  /* Shared press/hover feedback for every clickable control */
   .btn-press {
     transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
     position: relative;
-    overflow: hidden;
+    overflow: hidden; /* keeps the ripple effect clipped to the button */
   }
   .btn-press:hover { transform: scale(1.05); filter: brightness(1.05); }
   .btn-press:active { transform: scale(0.93); }
+  /* Applied briefly via JS when a button is triggered from the keyboard */
   .btn-press.key-active {
     transform: scale(0.90);
     filter: brightness(1.15);
   }
 
+  /* Cyan glow specifically for the "=" button so it reads as the primary action */
   .glow-equals { box-shadow: 0 0 22px rgba(6,182,212,0.55), 0 8px 20px rgba(0,0,0,0.15); }
   .glow-equals:hover { box-shadow: 0 0 32px rgba(6,182,212,0.75), 0 10px 24px rgba(0,0,0,0.18); }
 
+  /* Material-style ripple, spawned dynamically inside the clicked button */
   .ripple {
     position: absolute;
     border-radius: 50%;
@@ -99,6 +129,7 @@
     to { transform: scale(3); opacity: 0; }
   }
 
+  /* Quick pulse applied to the display whenever a new result appears */
   @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.04); }
@@ -106,6 +137,7 @@
   }
   .result-pulse { animation: pulse 0.3s ease; }
 
+  /* Subtle diagonal light "sweep" that passes across the whole calculator card */
   .calc-card { position: relative; overflow: hidden; }
   .calc-card::before {
     content: "";
@@ -125,8 +157,13 @@
     100% { left: 140%; }
   }
 
+  /* ==========================================================================
+     Slide-in / dropdown panels
+     Panels stay in the DOM at all times; visibility is purely CSS-driven via
+     the `.open` class so they can animate in and out smoothly.
+     ========================================================================== */
   #historyPanel {
-    transform: translateX(110%);
+    transform: translateX(110%); /* parked off-screen to the right */
     transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
   }
   #historyPanel.open { transform: translateX(0); }
@@ -134,7 +171,7 @@
   #themePanel {
     transform: translateY(-8px) scale(0.95);
     opacity: 0;
-    pointer-events: none;
+    pointer-events: none; /* prevents clicks while hidden */
     transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
   }
   #themePanel.open {
@@ -143,6 +180,7 @@
     pointer-events: auto;
   }
 
+  /* Themed scrollbar for the history list */
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px; }
   ::-webkit-scrollbar-thumb {
@@ -153,12 +191,11 @@
     background: linear-gradient(to bottom, #0ea5e9, #0284c7);
   }
 
-  .sci-btn { font-size: 0.85rem; }
+  .sci-btn { font-size: 0.85rem; } /* scientific keys use slightly smaller text to fit labels like "10ˣ" */
 
-  .toast {
-    animation: fadeInUp 0.3s ease both;
-  }
+  .toast { animation: fadeInUp 0.3s ease both; }
 
+  /* Small circular color preview shown next to each theme name in the dropdown */
   .theme-swatch {
     width: 30px; height: 30px; border-radius: 9999px;
     border: 2px solid rgba(255,255,255,0.6);
@@ -168,7 +205,10 @@
   .theme-swatch:hover { transform: scale(1.15); }
   .theme-swatch.active { box-shadow: 0 0 0 2px var(--accent); }
 
-  /* Welcome screen */
+  /* ==========================
+     Welcome / splash screen
+     Shown once on load, fades out to reveal the calculator underneath.
+     ========================================================================== */
   #welcomeScreen {
     position: fixed; inset: 0; z-index: 100;
     display: flex; align-items: center; justify-content: center;
@@ -179,15 +219,15 @@
   #calcWrapper { opacity: 0; transform: scale(0.94); transition: all 0.6s cubic-bezier(0.16,1,0.3,1); }
   #calcWrapper.revealed { opacity: 1; transform: scale(1); }
 
-  #expressionPreview {
-    min-height: 1.1rem;
-  }
+  #expressionPreview { min-height: 1.1rem; } /* reserves space so layout doesn't jump when empty */
 </style>
 </head>
 
 <body data-theme="sky" class="min-h-screen flex items-center justify-center relative overflow-y-auto overflow-x-hidden">
 
-  <!-- Welcome screen -->
+  <!-- ==========================================================================
+       Welcome screen — greets the user and reveals the calculator on click
+       ========================================================================== -->
   <div id="welcomeScreen">
     <div class="fade-in text-center px-6">
       <div class="text-5xl mb-4">⚡</div>
@@ -199,16 +239,18 @@
     </div>
   </div>
 
-  <!-- Floating background shapes -->
+  <!-- Decorative floating blur blobs (purely cosmetic, no interaction) -->
   <div class="absolute w-72 h-72 bg-blue-300 rounded-full blur-3xl opacity-40 top-10 left-10 float-a"></div>
   <div class="absolute w-72 h-72 bg-cyan-300 rounded-full blur-3xl opacity-40 bottom-10 right-10 float-b"></div>
   <div class="absolute w-56 h-56 bg-white rounded-full blur-3xl opacity-30 top-1/2 right-1/4 float-a"></div>
 
-  <!-- Calculator -->
+  <!-- ==========================================================================
+       Calculator card
+       ========================================================================== -->
   <div id="calcWrapper" class="calc-card relative w-[400px] max-w-[92vw] my-8 backdrop-blur-2xl border rounded-[2rem] shadow-[0_8px_40px_rgba(0,0,0,0.2)] p-6"
        style="background: var(--glass); border-color: var(--glass-border);">
 
-    <!-- Header -->
+    <!-- Header: title, live clock, theme picker, history toggle -->
     <div class="flex items-center justify-between mb-4 px-1">
       <div class="flex items-center gap-2">
         <span class="text-2xl">⚡</span>
@@ -219,7 +261,7 @@
         <button id="themeToggle" title="Themes" class="btn-press w-8 h-8 rounded-full flex items-center justify-center text-sm shadow" style="background: var(--key-bg); color: var(--text-main);">🎨</button>
         <button id="historyToggle" title="Show history" class="btn-press w-8 h-8 rounded-full flex items-center justify-center text-sm shadow" style="background: var(--key-bg); color: var(--text-main);">📜</button>
 
-        <!-- Theme dropdown -->
+        <!-- Theme dropdown (positioned relative to the header, toggled via .open) -->
         <div id="themePanel" class="absolute top-10 right-0 z-40 p-2 rounded-2xl shadow-2xl flex flex-col gap-1 w-40" style="background: var(--panel-bg); backdrop-filter: blur(20px);">
           <button data-theme-choice="sky" class="btn-press flex items-center gap-2 px-2 py-2 rounded-xl text-sm" style="color: var(--text-main);">
             <span class="theme-swatch" style="width:20px;height:20px;background: linear-gradient(135deg,#7dd3fc,#3b82f6);"></span> ☀️ Sky
@@ -240,7 +282,7 @@
       </div>
     </div>
 
-    <!-- Mode + Stats row -->
+    <!-- Mode toggles (scientific panel, angle unit, shortcuts help) + running stats -->
     <div class="flex items-center justify-between mb-2 px-1 text-xs" style="color: var(--text-sub);">
       <div class="flex items-center gap-2">
         <button id="sciToggle" class="btn-press px-2 py-1 rounded-lg shadow" style="background: var(--key-bg); color: var(--text-main);">🧠 Scientific</button>
@@ -250,7 +292,7 @@
       <span id="statsLine">Calculations: 0</span>
     </div>
 
-    <!-- Display -->
+    <!-- Display: shows the live expression preview above the current input/result -->
     <div class="mb-4 rounded-2xl shadow-inner px-5 py-3 h-28 flex flex-col justify-end relative" style="background: var(--display-bg);">
       <div id="expressionPreview" class="text-right text-sm h-5 truncate" style="color: var(--text-sub);">&nbsp;</div>
       <input
@@ -264,7 +306,7 @@
       <button id="copyBtn" title="Copy result" class="absolute top-2 right-2 text-xs px-2 py-1 rounded-lg shadow btn-press" style="background: var(--key-bg); color: var(--text-main);">📋</button>
     </div>
 
-    <!-- Memory row -->
+    <!-- Memory row: MC (clear) / MR (recall) / M+ (add) / M− (subtract) -->
     <div class="grid grid-cols-4 gap-2 mb-3">
       <button data-mem="mc" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">MC</button>
       <button data-mem="mr" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">MR</button>
@@ -272,7 +314,7 @@
       <button data-mem="m-" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">M−</button>
     </div>
 
-    <!-- Scientific row (toggleable) -->
+    <!-- Scientific function row — hidden by default, revealed via the "🧠 Scientific" toggle -->
     <div id="sciRow" class="grid grid-cols-4 gap-2 mb-3 hidden">
       <button data-sci="sqrt" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">√</button>
       <button data-sci="sq" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">x²</button>
@@ -292,6 +334,7 @@
       <button data-value="(" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">(</button>
       <button data-value=")" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">)</button>
       <button data-sci="pow10" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">10ˣ</button>
+      <!-- "@rt@" is an internal sentinel meaning "nth root of" (x @rt@ y => y-th root of x); resolved in calculate() -->
       <button data-value="@rt@" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">ʸ√x</button>
       <button data-sci="rand" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">Rand</button>
       <button data-sci="floor" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">⌊x⌋</button>
@@ -299,7 +342,7 @@
       <button data-sci="round" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">Round</button>
     </div>
 
-    <!-- Buttons -->
+    <!-- Standard keypad -->
     <div class="grid grid-cols-4 gap-3">
 
       <button data-action="clear" class="btn-press h-16 rounded-2xl bg-red-400/90 text-white text-lg font-semibold shadow-lg">AC</button>
@@ -329,7 +372,10 @@
     </div>
   </div>
 
-  <!-- History side panel -->
+  <!-- ==========================================================================
+       History side panel — slides in from the right; shows stats dashboard,
+       a searchable/filterable history list, export, and clear controls.
+       ========================================================================== -->
   <div id="historyPanel" class="fixed top-0 right-0 h-full w-[320px] max-w-[85vw] z-50 shadow-2xl p-5 overflow-y-auto"
        style="background: var(--panel-bg); backdrop-filter: blur(20px);">
     <div class="flex items-center justify-between mb-4">
@@ -337,7 +383,7 @@
       <button id="closeHistory" class="btn-press w-8 h-8 rounded-full shadow" style="background: var(--key-bg); color: var(--text-main);">✕</button>
     </div>
 
-    <!-- Stats dashboard -->
+    <!-- At-a-glance stats: total calcs, largest result seen, current memory, last-used timestamp -->
     <div class="grid grid-cols-2 gap-2 mb-4 text-xs p-3 rounded-2xl" style="background: var(--key-bg); color: var(--text-main);">
       <div>Total<br><span class="text-base font-bold" id="statTotal">0</span></div>
       <div>Largest<br><span class="text-base font-bold" id="statLargest">0</span></div>
@@ -351,11 +397,14 @@
       <button id="exportHistoryBtn" class="btn-press flex-1 text-sm py-2 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">📄 Export</button>
       <button id="clearHistoryBtn" class="btn-press flex-1 text-sm py-2 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">Clear History</button>
     </div>
+    <!-- Populated dynamically by renderHistory(); grouped under date-category headings -->
     <ul id="historyList" class="space-y-2 text-sm"></ul>
     <p id="emptyHistory" class="text-xs mt-4" style="color: var(--text-sub);">No calculations yet. Your history is saved automatically and will still be here next time you open this calculator.</p>
   </div>
 
-  <!-- Keyboard shortcuts modal -->
+  <!-- ==========================================================================
+       Keyboard shortcuts modal — opened via the "?" button or the ? key
+       ========================================================================== -->
   <div id="shortcutsModal" class="fixed inset-0 z-[60] hidden items-center justify-center" style="background: rgba(0,0,0,0.4);">
     <div class="fade-in w-[300px] max-w-[85vw] p-6 rounded-2xl shadow-2xl" style="background: var(--panel-bg); backdrop-filter: blur(20px);">
       <div class="flex items-center justify-between mb-3">
@@ -373,12 +422,39 @@
     </div>
   </div>
 
-  <!-- Toast -->
+  <!-- Small transient toast notification, reused for every "hint" message -->
   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-sm font-medium shadow-lg hidden z-50"
        style="background: var(--panel-bg); color: var(--text-main);"></div>
 
 <script>
-  /* ---------- Welcome screen ---------- */
+  /* ============================================================================
+   * CALCULATOR APP LOGIC
+   * ----------------------------------------------------------------------------
+   * Sections in this file, in order:
+   *   1. Welcome screen        - greeting + reveal animation
+   *   2. Clock                 - header time display
+   *   3. Core element refs     - cached DOM lookups
+   *   4. Persistent storage    - load/save app state via window.storage
+   *   5. Sound + toast helpers - click feedback / notifications
+   *   6. Expression preview    - live "as you type" result preview
+   *   7. Display helpers       - append/clear/backspace on the input
+   *   8. Evaluation engine     - safeEvaluate() + calculate()
+   *   9. History panel         - store, render, search, export, clear
+   *  10. Theme selector        - dropdown + persistence
+   *  11. Angle mode toggle     - DEG / RAD switch for trig functions
+   *  12. Shortcuts modal       - open/close cheat sheet
+   *  13. Scientific panel      - toggle + all sci-function handlers
+   *  14. Memory buttons        - MC / MR / M+ / M-
+   *  15. Ripple + haptics      - visual/tactile button feedback
+   *  16. Button wiring         - click listeners for keypad/actions
+   *  17. Keyboard support      - full keyboard parity with the on-screen keys
+   * ==========================================================================*/
+
+  /* ----------------------------------------------------------------------------
+   * 1. Welcome screen
+   * -------------------------------------------------------------------------- */
+
+  /** Returns a greeting string based on the current local hour. */
   function getGreeting() {
     const h = new Date().getHours();
     if (h < 12) return "Good Morning 👋";
@@ -388,12 +464,15 @@
   }
   document.getElementById("greetingText").textContent = getGreeting();
 
+  // Clicking "Start Calculating" fades out the splash and reveals the calculator.
   document.getElementById("startBtn").addEventListener("click", () => {
     document.getElementById("welcomeScreen").classList.add("fade-out");
     document.getElementById("calcWrapper").classList.add("revealed");
   });
 
-  /* ---------- Clock ---------- */
+  /* ----------------------------------------------------------------------------
+   * 2. Clock — updates the header time every 30s (good enough for a minute-level clock)
+   * -------------------------------------------------------------------------- */
   const clockEl = document.getElementById('clock');
   function updateClock() {
     const now = new Date();
@@ -402,7 +481,9 @@
   updateClock();
   setInterval(updateClock, 1000 * 30);
 
-  /* ---------- Core elements ---------- */
+  /* ----------------------------------------------------------------------------
+   * 3. Core element references (cached once to avoid repeated DOM lookups)
+   * -------------------------------------------------------------------------- */
   const display = document.getElementById("display");
   const previewLabel = document.getElementById("expressionPreview");
   const historyList = document.getElementById("historyList");
@@ -415,22 +496,31 @@
   const statLast = document.getElementById("statLast");
   const historySearch = document.getElementById("historySearch");
 
-  let historyStore = [];
-  let calcCount = 0;
-  let memory = 0;
-  let largestNumber = 0;
-  let lastUsed = null;
-  let angleMode = "DEG";
+  // Mutable app state (persisted to window.storage — see loadState/saveState below)
+  let historyStore = [];      // array of { label, result, ts }
+  let calcCount = 0;          // total number of calculations ever performed
+  let memory = 0;             // calculator memory (M+ / M- / MR / MC)
+  let largestNumber = 0;      // largest |result| seen, shown in the stats dashboard
+  let lastUsed = null;        // human-readable timestamp of the last calculation
+  let angleMode = "DEG";      // "DEG" or "RAD", affects sin/cos/tan
   const angleModeBtn = document.getElementById("angleMode");
 
-  /* ---------- Persistent storage ---------- */
+  /* ----------------------------------------------------------------------------
+   * 4. Persistent storage
+   *    Everything the user would expect to survive a page reload (theme,
+   *    history, memory, angle mode, running stats) lives in one JSON blob
+   *    under the "calc-state" key.
+   * -------------------------------------------------------------------------- */
+
+  /** Loads saved state (if any) from window.storage and hydrates the UI. */
   async function loadState() {
     let savedTheme = null;
     try {
       const res = await window.storage.get('calc-state', false);
       if (res && res.value) {
         const data = JSON.parse(res.value);
-        // migrate old plain-string history entries to the new {label, result, ts} shape
+        // Migrate old plain-string history entries (from an earlier version of
+        // this app) to the current { label, result, ts } object shape.
         historyStore = (data.historyStore || []).map(item =>
           typeof item === "string" ? { label: item, result: item.split("=")[1]?.trim() ?? "", ts: null } : item
         );
@@ -442,10 +532,10 @@
         angleMode = data.angleMode || "DEG";
       }
     } catch (e) {
-      // no saved state yet, that's fine
+      // No saved state yet (first visit) — safe to continue with defaults.
     }
 
-    // Theme: use saved choice, else match the system's light/dark preference
+    // Theme priority: explicit saved choice > OS-level dark mode preference > default "sky".
     if (savedTheme) {
       document.body.dataset.theme = savedTheme;
     } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -457,6 +547,7 @@
     updateStatsUI();
   }
 
+  /** Persists the current app state to window.storage. Fire-and-forget; failures are logged, not surfaced to the user. */
   async function saveState() {
     try {
       await window.storage.set('calc-state', JSON.stringify({
@@ -468,6 +559,7 @@
     }
   }
 
+  /** Refreshes every stat displayed in the header and the history panel dashboard. */
   function updateStatsUI() {
     statTotal.textContent = calcCount;
     statLargest.textContent = largestNumber;
@@ -476,8 +568,15 @@
     statsLine.textContent = `Calculations: ${calcCount}`;
   }
 
-  /* ---------- Sound effect ---------- */
+  /* ----------------------------------------------------------------------------
+   * 5. Sound + toast helpers
+   * -------------------------------------------------------------------------- */
+
+  // Lazily-created AudioContext (browsers require a user gesture before audio
+  // can play, so we don't create this until the first click).
   let audioCtx = null;
+
+  /** Plays a short, quiet "click" tone for tactile feedback on every button press. */
   function playClick() {
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
@@ -491,11 +590,14 @@
       gain.connect(audioCtx.destination);
       osc.start();
       osc.stop(audioCtx.currentTime + 0.08);
-    } catch (e) { /* audio not available, ignore */ }
+    } catch (e) {
+      // Audio isn't available/allowed in this context — fail silently.
+    }
   }
 
-  /* ---------- Toast ---------- */
   let toastTimer = null;
+
+  /** Shows a small transient message at the bottom of the screen for ~1.5s. */
   function showToast(msg) {
     toast.textContent = msg;
     toast.classList.remove("hidden");
@@ -504,9 +606,17 @@
     toastTimer = setTimeout(() => toast.classList.add("hidden"), 1500);
   }
 
-  /* ---------- Expression preview ---------- */
+  /* ----------------------------------------------------------------------------
+   * 6. Expression preview — shows a human-readable version of the raw
+   *    expression, plus a live "→ result" preview once it's evaluable.
+   * -------------------------------------------------------------------------- */
+
+  // Centralized list of all user-facing error strings that can appear in the display.
+  const ERROR_MESSAGES = ["Error", "Division by Zero", "Invalid Expression", "Negative Square Root", "Invalid Input"];
+
+  /** Converts the raw internal expression (e.g. "12*3-@rt@") into a readable form (e.g. "12 × 3 − √"). */
   function formatExpression(expr) {
-    if (!expr || expr === "0" || ERROR_MESSAGES.includes(expr)) return "\u00A0";
+    if (!expr || expr === "0" || ERROR_MESSAGES.includes(expr)) return "\u00A0"; // non-breaking space keeps the row's height stable
     return expr
       .replace(/@rt@/g, " √ ")
       .replace(/\*\*/g, " ^ ")
@@ -516,6 +626,8 @@
       .replace(/\s+/g, " ")
       .trim();
   }
+
+  /** Recomputes the preview line above the display: formatted expression + live result if evaluable. */
   function updatePreview() {
     const raw = display.value;
     let text = formatExpression(raw);
@@ -527,18 +639,22 @@
           text += "  →  " + roundForDisplay(liveResult);
         }
       } catch (e) {
-        // incomplete expression, no live preview yet
+        // Expression is incomplete (e.g. "12+"), so there's nothing to preview yet.
       }
     }
     previewLabel.textContent = text;
   }
 
+  /** Rounds to 8 decimal places to avoid floating-point noise (e.g. 0.1 + 0.2) in the preview. */
   function roundForDisplay(n) {
     return Math.round(n * 1e8) / 1e8;
   }
 
-  /* ---------- Display helpers ---------- */
-  const ERROR_MESSAGES = ["Error", "Division by Zero", "Invalid Expression", "Negative Square Root", "Invalid Input"];
+  /* ----------------------------------------------------------------------------
+   * 7. Display helpers
+   * -------------------------------------------------------------------------- */
+
+  /** Appends a character/token to the display, clearing it first if it currently shows "0" or an error. */
   function appendToDisplay(value) {
     if (display.value === "0" || ERROR_MESSAGES.includes(display.value)) {
       display.value = "";
@@ -547,18 +663,28 @@
     updatePreview();
   }
 
+  /** Resets the display to "0" (the "AC" button). */
   function clearDisplay() {
     display.value = "0";
     updatePreview();
   }
 
+  /** Removes the last character from the display; falls back to "0" if it becomes empty. */
   function backspace() {
     display.value = display.value.slice(0, -1);
     if (display.value === "") display.value = "0";
     updatePreview();
   }
 
-  /* ---------- Safer expression evaluation (no eval) ---------- */
+  /* ----------------------------------------------------------------------------
+   * 8. Evaluation engine
+   * -------------------------------------------------------------------------- */
+
+  /**
+   * Evaluates a numeric expression string without using a raw eval().
+   * A strict character whitelist is enforced first so only digits, basic
+   * operators, parentheses, decimal points, and whitespace can reach Function().
+   */
   function safeEvaluate(expr) {
     if (!/^[0-9+\-*/().%\s]*$/.test(expr)) {
       throw new Error("Invalid characters");
@@ -567,6 +693,7 @@
     return Function('"use strict"; return (' + expr + ')')();
   }
 
+  /** Writes a computed result to the display, plays the "new result" pulse animation, and logs it to history. */
   function recordResult(rawLabel, result) {
     display.value = result;
     display.classList.add("result-pulse");
@@ -574,17 +701,23 @@
     addToHistory(`${rawLabel} = ${result}`, result);
   }
 
+  /** Shows one of the standard error messages in the display and clears the preview line. */
   function showError(message) {
     display.value = message;
     previewLabel.textContent = "\u00A0";
   }
 
+  /**
+   * Evaluates the current display expression (triggered by "=", Enter key).
+   * Handles the special "@rt@" (nth root) token as a separate case since it
+   * isn't valid JS syntax and must be parsed manually.
+   */
   function calculate() {
     let expression = display.value;
     const rawLabel = formatExpression(expression);
 
     try {
-      // nth root: "x@rt@y" means the y-th root of x
+      // nth root: "x@rt@y" means "the y-th root of x"
       if (expression.includes("@rt@")) {
         const [xPart, yPart] = expression.split("@rt@");
         const x = safeEvaluate(xPart.replace(/%/g, "/100"));
@@ -607,7 +740,11 @@
     }
   }
 
-  /* ---------- History panel ---------- */
+  /* ----------------------------------------------------------------------------
+   * 9. History panel
+   * -------------------------------------------------------------------------- */
+
+  /** Adds a completed calculation to history, updates running stats, and persists state. */
   function addToHistory(entry, result) {
     historyStore.push({ label: entry, result: String(result), ts: Date.now() });
     calcCount++;
@@ -619,6 +756,7 @@
     saveState();
   }
 
+  /** Buckets a timestamp into "Today" / "Yesterday" / "This Week" / "Earlier" for grouped display. */
   function dateCategory(ts) {
     if (!ts) return "Earlier";
     const now = new Date();
@@ -631,6 +769,11 @@
     return "Earlier";
   }
 
+  /**
+   * Rebuilds the history list in the side panel, optionally filtered by a
+   * case-insensitive search term. Entries are grouped under date headings,
+   * newest first within each group.
+   */
   function renderHistory(filter = "") {
     historyList.innerHTML = "";
     const items = filter
@@ -648,13 +791,15 @@
 
     const order = ["Today", "Yesterday", "This Week", "Earlier"];
     const grouped = {};
-    [...items].reverse().forEach((entry) => {
+    [...items].reverse().forEach((entry) => { // reverse() so newest entries render first
       const cat = dateCategory(entry.ts);
       (grouped[cat] = grouped[cat] || []).push(entry);
     });
 
     order.forEach((cat) => {
       if (!grouped[cat]) return;
+
+      // Section heading (e.g. "TODAY")
       const heading = document.createElement("li");
       heading.className = "text-xs uppercase tracking-wide font-semibold pt-2 pb-1";
       heading.style.color = "var(--text-sub)";
@@ -681,6 +826,7 @@
         li.appendChild(line1);
         if (entry.ts) li.appendChild(line2);
 
+        // Clicking a history entry loads its result back into the display for reuse.
         li.addEventListener("click", () => {
           display.value = entry.result;
           updatePreview();
@@ -690,7 +836,7 @@
     });
   }
 
-  /* ---------- Export history ---------- */
+  /** Exports the full (unfiltered) history as a downloadable .txt file. */
   document.getElementById("exportHistoryBtn").addEventListener("click", () => {
     if (historyStore.length === 0) {
       showToast("No history to export");
@@ -703,10 +849,11 @@
     a.href = url;
     a.download = "calculator-history.txt";
     a.click();
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(url); // release the blob URL once the download has been triggered
     showToast("History exported");
   });
 
+  // Live-filter the history list as the user types in the search box.
   historySearch.addEventListener("input", () => renderHistory(historySearch.value));
 
   document.getElementById("historyToggle").addEventListener("click", () => {
@@ -726,23 +873,29 @@
     showToast("History cleared");
   });
 
-  /* ---------- Copy result ---------- */
+  /** Copies the current display value to the clipboard. */
   document.getElementById("copyBtn").addEventListener("click", () => {
     navigator.clipboard?.writeText(display.value).then(() => showToast("Copied " + display.value));
   });
 
-  /* ---------- Theme selector ---------- */
+  /* ----------------------------------------------------------------------------
+   * 10. Theme selector
+   * -------------------------------------------------------------------------- */
   const themeToggle = document.getElementById("themeToggle");
   const themePanel = document.getElementById("themePanel");
+
   themeToggle.addEventListener("click", (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // prevent the document-level click handler below from immediately closing the panel
     themePanel.classList.toggle("open");
   });
+
+  // Clicking anywhere outside the theme panel closes it.
   document.addEventListener("click", (e) => {
     if (!themePanel.contains(e.target) && e.target !== themeToggle) {
       themePanel.classList.remove("open");
     }
   });
+
   document.querySelectorAll("[data-theme-choice]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const theme = btn.getAttribute("data-theme-choice");
@@ -753,7 +906,9 @@
     });
   });
 
-  /* ---------- Degree / Radian toggle ---------- */
+  /* ----------------------------------------------------------------------------
+   * 11. Angle mode toggle (affects sin/cos/tan in the scientific panel)
+   * -------------------------------------------------------------------------- */
   angleModeBtn.addEventListener("click", () => {
     angleMode = angleMode === "DEG" ? "RAD" : "DEG";
     angleModeBtn.textContent = angleMode;
@@ -761,8 +916,11 @@
     saveState();
   });
 
-  /* ---------- Keyboard shortcuts modal ---------- */
+  /* ----------------------------------------------------------------------------
+   * 12. Keyboard shortcuts modal
+   * -------------------------------------------------------------------------- */
   const shortcutsModal = document.getElementById("shortcutsModal");
+
   function openShortcuts() {
     shortcutsModal.classList.remove("hidden");
     shortcutsModal.classList.add("flex");
@@ -773,20 +931,24 @@
   }
   document.getElementById("shortcutsBtn").addEventListener("click", openShortcuts);
   document.getElementById("closeShortcuts").addEventListener("click", closeShortcuts);
+  // Clicking the dimmed backdrop (but not the modal card itself) closes it.
   shortcutsModal.addEventListener("click", (e) => {
     if (e.target === shortcutsModal) closeShortcuts();
   });
 
-  /* ---------- Scientific panel toggle ---------- */
+  /* ----------------------------------------------------------------------------
+   * 13. Scientific panel
+   * -------------------------------------------------------------------------- */
   const sciRow = document.getElementById("sciRow");
+
   document.getElementById("sciToggle").addEventListener("click", () => {
     sciRow.classList.toggle("hidden");
-
     if (!sciRow.classList.contains("hidden")) {
       sciRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   });
 
+  /** Iterative factorial. Returns NaN for negative/non-integer input, Infinity beyond 170! (float overflow). */
   function factorial(n) {
     if (n < 0 || !Number.isInteger(n)) return NaN;
     if (n > 170) return Infinity;
@@ -795,12 +957,15 @@
     return r;
   }
 
+  // Wires up every button in the scientific row. Each button's `data-sci`
+  // attribute selects the operation applied to the current display value.
   document.querySelectorAll("[data-sci]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const fn = btn.getAttribute("data-sci");
       try {
         let current = display.value === "0" ? "" : display.value;
         let val = parseFloat(current || "0");
+        // Trig functions need radians internally regardless of the display mode.
         const angleVal = angleMode === "DEG" ? (val * Math.PI) / 180 : val;
         let result;
         let label;
@@ -828,7 +993,7 @@
             result = factorial(val); label = `${val}!`; break;
           case "abs": result = Math.abs(val); label = `|${val}|`; break;
           case "pow10": result = Math.pow(10, val); label = `10^${val}`; break;
-          case "rand": appendToDisplay(Math.random().toFixed(6)); return;
+          case "rand": appendToDisplay(Math.random().toFixed(6)); return; // inserts a value rather than replacing the display
           case "floor": result = Math.floor(val); label = `floor(${val})`; break;
           case "ceil": result = Math.ceil(val); label = `ceil(${val})`; break;
           case "round": result = Math.round(val); label = `round(${val})`; break;
@@ -844,7 +1009,9 @@
     });
   });
 
-  /* ---------- Memory buttons ---------- */
+  /* ----------------------------------------------------------------------------
+   * 14. Memory buttons (MC / MR / M+ / M-)
+   * -------------------------------------------------------------------------- */
   document.querySelectorAll("[data-mem]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const action = btn.getAttribute("data-mem");
@@ -858,13 +1025,18 @@
     });
   });
 
-  /* ---------- Ripple effect ---------- */
+  /* ----------------------------------------------------------------------------
+   * 15. Ripple + haptic feedback (purely cosmetic/tactile, no logic impact)
+   * -------------------------------------------------------------------------- */
+
+  /** Spawns a short-lived ripple <span> at the click position inside the given button. */
   function createRipple(e, btn) {
     const rect = btn.getBoundingClientRect();
     const ripple = document.createElement("span");
     const size = Math.max(rect.width, rect.height);
     ripple.classList.add("ripple");
     ripple.style.width = ripple.style.height = size + "px";
+    // Falls back to the button's center if the event has no clientX/Y (e.g. keyboard-triggered).
     const x = (e.clientX ?? rect.left + rect.width / 2) - rect.left - size / 2;
     const y = (e.clientY ?? rect.top + rect.height / 2) - rect.top - size / 2;
     ripple.style.left = x + "px";
@@ -873,11 +1045,16 @@
     setTimeout(() => ripple.remove(), 600);
   }
 
+  /** Triggers a brief vibration on devices that support the Vibration API. */
   function vibrate() {
     if (navigator.vibrate) navigator.vibrate(20);
   }
 
-  /* ---------- Wire up main buttons ---------- */
+  /* ----------------------------------------------------------------------------
+   * 16. Button wiring
+   * -------------------------------------------------------------------------- */
+
+  // Every interactive control shares the same press feedback (ripple + sound + vibration).
   document.querySelectorAll(".btn-press").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       createRipple(e, btn);
@@ -886,10 +1063,12 @@
     });
   });
 
+  // Numeric/operator keys: append their value to the display.
   document.querySelectorAll("[data-value]").forEach((btn) => {
     btn.addEventListener("click", () => appendToDisplay(btn.getAttribute("data-value")));
   });
 
+  // AC / backspace / equals.
   document.querySelectorAll("[data-action]").forEach((btn) => {
     const action = btn.getAttribute("data-action");
     btn.addEventListener("click", () => {
@@ -899,7 +1078,14 @@
     });
   });
 
-  /* ---------- Keyboard support + highlighting ---------- */
+  /* ----------------------------------------------------------------------------
+   * 17. Keyboard support
+   *    Mirrors every on-screen action so the calculator is fully usable
+   *    without a mouse, and briefly highlights the corresponding button
+   *    for visual feedback.
+   * -------------------------------------------------------------------------- */
+
+  // Maps each supported key to the CSS selector of its on-screen equivalent.
   const keyMap = {
     "+": '[data-value="+"]',
     "-": '[data-value="-"]',
@@ -914,6 +1100,7 @@
   };
   for (let i = 0; i <= 9; i++) keyMap[i.toString()] = `[data-value="${i}"]`;
 
+  /** Briefly applies the `.key-active` press style to the button matching `selector`. */
   function highlightKey(selector) {
     const btn = document.querySelector(selector);
     if (!btn) return;
@@ -922,7 +1109,7 @@
   }
 
   document.addEventListener("keydown", function (event) {
-    // don't hijack typing in the history search box
+    // Don't hijack typing while the user is searching history.
     if (event.target === historySearch) return;
     const key = event.key;
 
@@ -955,7 +1142,7 @@
       highlightKey(keyMap["%"]);
       playClick();
     } else if (key === "Enter" || key === "=") {
-      event.preventDefault();
+      event.preventDefault(); // stops Enter from doing anything unexpected (e.g. form submission)
       calculate();
       highlightKey(keyMap["Enter"]);
       playClick();
@@ -972,7 +1159,9 @@
     }
   });
 
-  /* Initial load */
+  /* ----------------------------------------------------------------------------
+   * Initial load
+   * -------------------------------------------------------------------------- */
   loadState();
   updatePreview();
 </script>
