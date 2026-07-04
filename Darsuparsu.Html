@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calculator</title>
- 
+
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
- 
+
 <style>
   * { font-family: 'Poppins', sans-serif; box-sizing: border-box; }
- 
+
   :root {
     --bg-a: #7dd3fc;
     --bg-b: #38bdf8;
@@ -25,7 +25,7 @@
     --panel-bg: rgba(255,255,255,0.55);
     --accent: #0891b2;
   }
- 
+
   body[data-theme="sky"] {
     --bg-a: #7dd3fc; --bg-b: #38bdf8; --bg-c: #3b82f6; --accent: #0891b2;
   }
@@ -49,18 +49,18 @@
     --panel-bg: rgba(15,23,42,0.9);
     --accent: #22d3ee;
   }
- 
+
   body {
     background: linear-gradient(135deg, var(--bg-a), var(--bg-b), var(--bg-c));
     transition: background 0.5s ease;
   }
- 
+
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(24px) scale(0.97); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
   .fade-in { animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
- 
+
   @keyframes floatSlow {
     0%, 100% { transform: translate(0, 0); }
     50%      { transform: translate(20px, -25px); }
@@ -71,7 +71,7 @@
   }
   .float-a { animation: floatSlow 9s ease-in-out infinite; }
   .float-b { animation: floatSlow2 11s ease-in-out infinite; }
- 
+
   .btn-press {
     transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
     position: relative;
@@ -83,10 +83,10 @@
     transform: scale(0.90);
     filter: brightness(1.15);
   }
- 
+
   .glow-equals { box-shadow: 0 0 22px rgba(6,182,212,0.55), 0 8px 20px rgba(0,0,0,0.15); }
   .glow-equals:hover { box-shadow: 0 0 32px rgba(6,182,212,0.75), 0 10px 24px rgba(0,0,0,0.18); }
- 
+
   .ripple {
     position: absolute;
     border-radius: 50%;
@@ -98,14 +98,14 @@
   @keyframes rippleAnim {
     to { transform: scale(3); opacity: 0; }
   }
- 
+
   @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.04); }
     100% { transform: scale(1); }
   }
   .result-pulse { animation: pulse 0.3s ease; }
- 
+
   .calc-card { position: relative; overflow: hidden; }
   .calc-card::before {
     content: "";
@@ -124,13 +124,13 @@
     45%  { left: 140%; }
     100% { left: 140%; }
   }
- 
+
   #historyPanel {
     transform: translateX(110%);
     transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
   }
   #historyPanel.open { transform: translateX(0); }
- 
+
   #themePanel {
     transform: translateY(-8px) scale(0.95);
     opacity: 0;
@@ -142,7 +142,7 @@
     opacity: 1;
     pointer-events: auto;
   }
- 
+
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px; }
   ::-webkit-scrollbar-thumb {
@@ -152,13 +152,13 @@
   ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(to bottom, #0ea5e9, #0284c7);
   }
- 
+
   .sci-btn { font-size: 0.85rem; }
- 
+
   .toast {
     animation: fadeInUp 0.3s ease both;
   }
- 
+
   .theme-swatch {
     width: 30px; height: 30px; border-radius: 9999px;
     border: 2px solid rgba(255,255,255,0.6);
@@ -167,7 +167,7 @@
   }
   .theme-swatch:hover { transform: scale(1.15); }
   .theme-swatch.active { box-shadow: 0 0 0 2px var(--accent); }
- 
+
   /* Welcome screen */
   #welcomeScreen {
     position: fixed; inset: 0; z-index: 100;
@@ -178,15 +178,15 @@
   #welcomeScreen.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
   #calcWrapper { opacity: 0; transform: scale(0.94); transition: all 0.6s cubic-bezier(0.16,1,0.3,1); }
   #calcWrapper.revealed { opacity: 1; transform: scale(1); }
- 
+
   #expressionPreview {
     min-height: 1.1rem;
   }
 </style>
 </head>
- 
+
 <body data-theme="sky" class="min-h-screen flex items-center justify-center relative overflow-y-auto overflow-x-hidden">
- 
+
   <!-- Welcome screen -->
   <div id="welcomeScreen">
     <div class="fade-in text-center px-6">
@@ -198,16 +198,16 @@
       </button>
     </div>
   </div>
- 
+
   <!-- Floating background shapes -->
   <div class="absolute w-72 h-72 bg-blue-300 rounded-full blur-3xl opacity-40 top-10 left-10 float-a"></div>
   <div class="absolute w-72 h-72 bg-cyan-300 rounded-full blur-3xl opacity-40 bottom-10 right-10 float-b"></div>
   <div class="absolute w-56 h-56 bg-white rounded-full blur-3xl opacity-30 top-1/2 right-1/4 float-a"></div>
- 
+
   <!-- Calculator -->
   <div id="calcWrapper" class="calc-card relative w-[400px] max-w-[92vw] my-8 backdrop-blur-2xl border rounded-[2rem] shadow-[0_8px_40px_rgba(0,0,0,0.2)] p-6"
        style="background: var(--glass); border-color: var(--glass-border);">
- 
+
     <!-- Header -->
     <div class="flex items-center justify-between mb-4 px-1">
       <div class="flex items-center gap-2">
@@ -218,14 +218,29 @@
         <span id="clock" class="text-sm font-medium" style="color: var(--text-sub);"></span>
         <button id="themeToggle" title="Themes" class="btn-press w-8 h-8 rounded-full flex items-center justify-center text-sm shadow" style="background: var(--key-bg); color: var(--text-main);">🎨</button>
         <button id="historyToggle" title="Show history" class="btn-press w-8 h-8 rounded-full flex items-center justify-center text-sm shadow" style="background: var(--key-bg); color: var(--text-main);">📜</button>
- 
+
         <!-- Theme dropdown -->
         <div id="themePanel" class="absolute top-10 right-0 z-40 p-2 rounded-2xl shadow-2xl flex flex-col gap-1 w-40" style="background: var(--panel-bg); backdrop-filter: blur(20px);">
           <button data-theme-choice="sky" class="btn-press flex items-center gap-2 px-2 py-2 rounded-xl text-sm" style="color: var(--text-main);">
             <span class="theme-swatch" style="width:20px;height:20px;background: linear-gradient(135deg,#7dd3fc,#3b82f6);"></span> ☀️ Sky
           </button>
-          <bu
-          <!-- Mode + Stats row -->
+          <button data-theme-choice="purple" class="btn-press flex items-center gap-2 px-2 py-2 rounded-xl text-sm" style="color: var(--text-main);">
+            <span class="theme-swatch" style="width:20px;height:20px;background: linear-gradient(135deg,#ddd6fe,#7c3aed);"></span> 💜 Purple
+          </button>
+          <button data-theme-choice="green" class="btn-press flex items-center gap-2 px-2 py-2 rounded-xl text-sm" style="color: var(--text-main);">
+            <span class="theme-swatch" style="width:20px;height:20px;background: linear-gradient(135deg,#bbf7d0,#15803d);"></span> 🌿 Green
+          </button>
+          <button data-theme-choice="sunset" class="btn-press flex items-center gap-2 px-2 py-2 rounded-xl text-sm" style="color: var(--text-main);">
+            <span class="theme-swatch" style="width:20px;height:20px;background: linear-gradient(135deg,#fed7aa,#c2410c);"></span> 🌅 Sunset
+          </button>
+          <button data-theme-choice="dark" class="btn-press flex items-center gap-2 px-2 py-2 rounded-xl text-sm" style="color: var(--text-main);">
+            <span class="theme-swatch" style="width:20px;height:20px;background: linear-gradient(135deg,#1e293b,#0b1120);"></span> 🌙 Dark
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode + Stats row -->
     <div class="flex items-center justify-between mb-2 px-1 text-xs" style="color: var(--text-sub);">
       <div class="flex items-center gap-2">
         <button id="sciToggle" class="btn-press px-2 py-1 rounded-lg shadow" style="background: var(--key-bg); color: var(--text-main);">🧠 Scientific</button>
@@ -234,7 +249,7 @@
       </div>
       <span id="statsLine">Calculations: 0</span>
     </div>
- 
+
     <!-- Display -->
     <div class="mb-4 rounded-2xl shadow-inner px-5 py-3 h-28 flex flex-col justify-end relative" style="background: var(--display-bg);">
       <div id="expressionPreview" class="text-right text-sm h-5 truncate" style="color: var(--text-sub);">&nbsp;</div>
@@ -248,7 +263,7 @@
       >
       <button id="copyBtn" title="Copy result" class="absolute top-2 right-2 text-xs px-2 py-1 rounded-lg shadow btn-press" style="background: var(--key-bg); color: var(--text-main);">📋</button>
     </div>
- 
+
     <!-- Memory row -->
     <div class="grid grid-cols-4 gap-2 mb-3">
       <button data-mem="mc" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">MC</button>
@@ -256,7 +271,7 @@
       <button data-mem="m+" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">M+</button>
       <button data-mem="m-" class="btn-press h-10 rounded-xl text-sm font-semibold shadow" style="background: var(--key-bg); color: var(--text-main);">M−</button>
     </div>
- 
+
     <!-- Scientific row (toggleable) -->
     <div id="sciRow" class="grid grid-cols-4 gap-2 mb-3 hidden">
       <button data-sci="sqrt" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">√</button>
@@ -283,37 +298,37 @@
       <button data-sci="ceil" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">⌈x⌉</button>
       <button data-sci="round" class="btn-press sci-btn h-10 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">Round</button>
     </div>
- 
+
     <!-- Buttons -->
     <div class="grid grid-cols-4 gap-3">
- 
+
       <button data-action="clear" class="btn-press h-16 rounded-2xl bg-red-400/90 text-white text-lg font-semibold shadow-lg">AC</button>
       <button data-action="back" class="btn-press h-16 rounded-2xl bg-amber-400/90 text-white text-xl font-semibold shadow-lg">⌫</button>
       <button data-value="%" class="btn-press h-16 rounded-2xl bg-indigo-400/90 text-white text-xl font-semibold shadow-lg">%</button>
       <button data-value="/" class="btn-press h-16 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-semibold shadow-lg">÷</button>
- 
+
       <button data-value="7" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">7</button>
       <button data-value="8" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">8</button>
       <button data-value="9" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">9</button>
       <button data-value="*" class="btn-press h-16 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-semibold shadow-lg">×</button>
- 
+
       <button data-value="4" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">4</button>
       <button data-value="5" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">5</button>
       <button data-value="6" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">6</button>
       <button data-value="-" class="btn-press h-16 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-semibold shadow-lg">−</button>
- 
+
       <button data-value="1" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">1</button>
       <button data-value="2" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">2</button>
       <button data-value="3" class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">3</button>
       <button data-value="+" class="btn-press h-16 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-semibold shadow-lg">+</button>
- 
+
       <button data-value="0" class="btn-press col-span-2 h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">0</button>
       <button data-value="." class="btn-press h-16 rounded-2xl text-xl font-medium shadow-lg" style="background: var(--key-bg); color: var(--text-main);">.</button>
       <button data-action="equals" class="btn-press glow-equals h-16 rounded-2xl bg-gradient-to-r from-cyan-500 to-sky-600 text-white text-xl font-bold">=</button>
- 
+
     </div>
   </div>
- 
+
   <!-- History side panel -->
   <div id="historyPanel" class="fixed top-0 right-0 h-full w-[320px] max-w-[85vw] z-50 shadow-2xl p-5 overflow-y-auto"
        style="background: var(--panel-bg); backdrop-filter: blur(20px);">
@@ -321,7 +336,7 @@
       <h2 class="text-lg font-bold" style="color: var(--text-main);">History</h2>
       <button id="closeHistory" class="btn-press w-8 h-8 rounded-full shadow" style="background: var(--key-bg); color: var(--text-main);">✕</button>
     </div>
- 
+
     <!-- Stats dashboard -->
     <div class="grid grid-cols-2 gap-2 mb-4 text-xs p-3 rounded-2xl" style="background: var(--key-bg); color: var(--text-main);">
       <div>Total<br><span class="text-base font-bold" id="statTotal">0</span></div>
@@ -329,9 +344,9 @@
       <div>Memory<br><span class="text-base font-bold" id="statMemory">0</span></div>
       <div>Last used<br><span class="text-sm font-semibold" id="statLast">—</span></div>
     </div>
- 
+
     <input id="historySearch" placeholder="🔍 Search history..." class="w-full mb-3 px-3 py-2 rounded-xl text-sm outline-none" style="background: var(--key-bg); color: var(--text-main);">
- 
+
     <div class="flex gap-2 mb-4">
       <button id="exportHistoryBtn" class="btn-press flex-1 text-sm py-2 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">📄 Export</button>
       <button id="clearHistoryBtn" class="btn-press flex-1 text-sm py-2 rounded-xl shadow" style="background: var(--key-bg); color: var(--text-main);">Clear History</button>
@@ -339,7 +354,7 @@
     <ul id="historyList" class="space-y-2 text-sm"></ul>
     <p id="emptyHistory" class="text-xs mt-4" style="color: var(--text-sub);">No calculations yet. Your history is saved automatically and will still be here next time you open this calculator.</p>
   </div>
- 
+
   <!-- Keyboard shortcuts modal -->
   <div id="shortcutsModal" class="fixed inset-0 z-[60] hidden items-center justify-center" style="background: rgba(0,0,0,0.4);">
     <div class="fade-in w-[300px] max-w-[85vw] p-6 rounded-2xl shadow-2xl" style="background: var(--panel-bg); backdrop-filter: blur(20px);">
@@ -357,11 +372,11 @@
       </ul>
     </div>
   </div>
- 
+
   <!-- Toast -->
   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl text-sm font-medium shadow-lg hidden z-50"
        style="background: var(--panel-bg); color: var(--text-main);"></div>
- 
+
 <script>
   /* ---------- Welcome screen ---------- */
   function getGreeting() {
@@ -372,11 +387,12 @@
     return "Good Night 🌙";
   }
   document.getElementById("greetingText").textContent = getGreeting();
- document.getElementById("startBtn").addEventListener("click", () => {
+
+  document.getElementById("startBtn").addEventListener("click", () => {
     document.getElementById("welcomeScreen").classList.add("fade-out");
     document.getElementById("calcWrapper").classList.add("revealed");
   });
- 
+
   /* ---------- Clock ---------- */
   const clockEl = document.getElementById('clock');
   function updateClock() {
@@ -385,7 +401,7 @@
   }
   updateClock();
   setInterval(updateClock, 1000 * 30);
- 
+
   /* ---------- Core elements ---------- */
   const display = document.getElementById("display");
   const previewLabel = document.getElementById("expressionPreview");
@@ -398,7 +414,7 @@
   const statMemory = document.getElementById("statMemory");
   const statLast = document.getElementById("statLast");
   const historySearch = document.getElementById("historySearch");
- 
+
   let historyStore = [];
   let calcCount = 0;
   let memory = 0;
@@ -406,7 +422,7 @@
   let lastUsed = null;
   let angleMode = "DEG";
   const angleModeBtn = document.getElementById("angleMode");
- 
+
   /* ---------- Persistent storage ---------- */
   async function loadState() {
     let savedTheme = null;
@@ -428,19 +444,19 @@
     } catch (e) {
       // no saved state yet, that's fine
     }
- 
+
     // Theme: use saved choice, else match the system's light/dark preference
     if (savedTheme) {
       document.body.dataset.theme = savedTheme;
     } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       document.body.dataset.theme = "dark";
     }
- 
+
     angleModeBtn.textContent = angleMode;
     renderHistory();
     updateStatsUI();
   }
- 
+
   async function saveState() {
     try {
       await window.storage.set('calc-state', JSON.stringify({
@@ -451,7 +467,7 @@
       console.error("Could not save calculator state:", e);
     }
   }
- 
+
   function updateStatsUI() {
     statTotal.textContent = calcCount;
     statLargest.textContent = largestNumber;
@@ -459,7 +475,7 @@
     statLast.textContent = lastUsed || "—";
     statsLine.textContent = `Calculations: ${calcCount}`;
   }
- 
+
   /* ---------- Sound effect ---------- */
   let audioCtx = null;
   function playClick() {
@@ -477,7 +493,7 @@
       osc.stop(audioCtx.currentTime + 0.08);
     } catch (e) { /* audio not available, ignore */ }
   }
- 
+
   /* ---------- Toast ---------- */
   let toastTimer = null;
   function showToast(msg) {
@@ -487,7 +503,7 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.add("hidden"), 1500);
   }
- 
+
   /* ---------- Expression preview ---------- */
   function formatExpression(expr) {
     if (!expr || expr === "0" || ERROR_MESSAGES.includes(expr)) return "\u00A0";
@@ -516,11 +532,11 @@
     }
     previewLabel.textContent = text;
   }
- 
+
   function roundForDisplay(n) {
     return Math.round(n * 1e8) / 1e8;
   }
- 
+
   /* ---------- Display helpers ---------- */
   const ERROR_MESSAGES = ["Error", "Division by Zero", "Invalid Expression", "Negative Square Root", "Invalid Input"];
   function appendToDisplay(value) {
@@ -530,18 +546,18 @@
     display.value += value;
     updatePreview();
   }
- 
+
   function clearDisplay() {
     display.value = "0";
     updatePreview();
   }
- 
+
   function backspace() {
     display.value = display.value.slice(0, -1);
     if (display.value === "") display.value = "0";
     updatePreview();
   }
- 
+
   /* ---------- Safer expression evaluation (no eval) ---------- */
   function safeEvaluate(expr) {
     if (!/^[0-9+\-*/().%\s]*$/.test(expr)) {
@@ -550,23 +566,23 @@
     // eslint-disable-next-line no-new-func
     return Function('"use strict"; return (' + expr + ')')();
   }
- 
+
   function recordResult(rawLabel, result) {
     display.value = result;
     display.classList.add("result-pulse");
     setTimeout(() => display.classList.remove("result-pulse"), 300);
     addToHistory(`${rawLabel} = ${result}`, result);
   }
- 
+
   function showError(message) {
     display.value = message;
     previewLabel.textContent = "\u00A0";
   }
- 
+
   function calculate() {
     let expression = display.value;
     const rawLabel = formatExpression(expression);
- 
+
     try {
       // nth root: "x@rt@y" means the y-th root of x
       if (expression.includes("@rt@")) {
@@ -578,19 +594,19 @@
         if (isNaN(result)) return showError("Invalid Expression");
         return recordResult(rawLabel.replace(/@rt@/g, " √ "), result);
       }
- 
+
       expression = expression.replace(/%/g, "/100");
       const result = safeEvaluate(expression);
- 
+
       if (result === Infinity || result === -Infinity) return showError("Division by Zero");
       if (isNaN(result)) return showError("Invalid Expression");
- 
+
       recordResult(rawLabel, result);
     } catch (error) {
       showError("Invalid Expression");
     }
   }
- 
+
   /* ---------- History panel ---------- */
   function addToHistory(entry, result) {
     historyStore.push({ label: entry, result: String(result), ts: Date.now() });
@@ -602,7 +618,7 @@
     renderHistory(historySearch.value);
     saveState();
   }
- 
+
   function dateCategory(ts) {
     if (!ts) return "Earlier";
     const now = new Date();
@@ -614,12 +630,13 @@
     if (diffDays <= 7) return "This Week";
     return "Earlier";
   }
- function renderHistory(filter = "") {
+
+  function renderHistory(filter = "") {
     historyList.innerHTML = "";
     const items = filter
       ? historyStore.filter(e => e.label.toLowerCase().includes(filter.toLowerCase()))
       : historyStore;
- 
+
     if (items.length === 0) {
       emptyHistory.classList.remove("hidden");
       emptyHistory.textContent = filter
@@ -628,14 +645,14 @@
       return;
     }
     emptyHistory.classList.add("hidden");
- 
+
     const order = ["Today", "Yesterday", "This Week", "Earlier"];
     const grouped = {};
     [...items].reverse().forEach((entry) => {
       const cat = dateCategory(entry.ts);
       (grouped[cat] = grouped[cat] || []).push(entry);
     });
- 
+
     order.forEach((cat) => {
       if (!grouped[cat]) return;
       const heading = document.createElement("li");
@@ -643,27 +660,27 @@
       heading.style.color = "var(--text-sub)";
       heading.textContent = cat;
       historyList.appendChild(heading);
- 
+
       grouped[cat].forEach((entry) => {
         const li = document.createElement("li");
         li.className = "px-3 py-2 rounded-xl shadow cursor-pointer";
         li.style.background = "var(--key-bg)";
         li.style.color = "var(--text-main)";
         li.title = "Click to reuse result";
- 
+
         const line1 = document.createElement("div");
         line1.textContent = entry.label;
- 
+
         const line2 = document.createElement("div");
         line2.className = "text-xs mt-0.5";
         line2.style.color = "var(--text-sub)";
         line2.textContent = entry.ts
           ? new Date(entry.ts).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
           : "";
- 
+
         li.appendChild(line1);
         if (entry.ts) li.appendChild(line2);
- 
+
         li.addEventListener("click", () => {
           display.value = entry.result;
           updatePreview();
@@ -672,7 +689,7 @@
       });
     });
   }
- 
+
   /* ---------- Export history ---------- */
   document.getElementById("exportHistoryBtn").addEventListener("click", () => {
     if (historyStore.length === 0) {
@@ -689,9 +706,9 @@
     URL.revokeObjectURL(url);
     showToast("History exported");
   });
- 
+
   historySearch.addEventListener("input", () => renderHistory(historySearch.value));
- 
+
   document.getElementById("historyToggle").addEventListener("click", () => {
     document.getElementById("historyPanel").classList.add("open");
   });
@@ -708,11 +725,12 @@
     saveState();
     showToast("History cleared");
   });
- 
+
   /* ---------- Copy result ---------- */
   document.getElementById("copyBtn").addEventListener("click", () => {
     navigator.clipboard?.writeText(display.value).then(() => showToast("Copied " + display.value));
   });
+
   /* ---------- Theme selector ---------- */
   const themeToggle = document.getElementById("themeToggle");
   const themePanel = document.getElementById("themePanel");
@@ -734,7 +752,7 @@
       saveState();
     });
   });
- 
+
   /* ---------- Degree / Radian toggle ---------- */
   angleModeBtn.addEventListener("click", () => {
     angleMode = angleMode === "DEG" ? "RAD" : "DEG";
@@ -742,7 +760,7 @@
     showToast("Angle mode: " + angleMode);
     saveState();
   });
- 
+
   /* ---------- Keyboard shortcuts modal ---------- */
   const shortcutsModal = document.getElementById("shortcutsModal");
   function openShortcuts() {
@@ -758,17 +776,17 @@
   shortcutsModal.addEventListener("click", (e) => {
     if (e.target === shortcutsModal) closeShortcuts();
   });
- 
+
   /* ---------- Scientific panel toggle ---------- */
   const sciRow = document.getElementById("sciRow");
   document.getElementById("sciToggle").addEventListener("click", () => {
     sciRow.classList.toggle("hidden");
- 
+
     if (!sciRow.classList.contains("hidden")) {
       sciRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   });
- 
+
   function factorial(n) {
     if (n < 0 || !Number.isInteger(n)) return NaN;
     if (n > 170) return Infinity;
@@ -776,7 +794,7 @@
     for (let i = 2; i <= n; i++) r *= i;
     return r;
   }
- 
+
   document.querySelectorAll("[data-sci]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const fn = btn.getAttribute("data-sci");
@@ -820,12 +838,12 @@
         if (isNaN(result)) return showError("Invalid Expression");
         if (result === Infinity || result === -Infinity) return showError("Division by Zero");
         recordResult(label, result);
-      } catch (e) 
-       showError("Invalid Expression");
+      } catch (e) {
+        showError("Invalid Expression");
       }
     });
   });
- 
+
   /* ---------- Memory buttons ---------- */
   document.querySelectorAll("[data-mem]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -839,7 +857,7 @@
       saveState();
     });
   });
- 
+
   /* ---------- Ripple effect ---------- */
   function createRipple(e, btn) {
     const rect = btn.getBoundingClientRect();
@@ -854,11 +872,11 @@
     btn.appendChild(ripple);
     setTimeout(() => ripple.remove(), 600);
   }
- 
+
   function vibrate() {
     if (navigator.vibrate) navigator.vibrate(20);
   }
- 
+
   /* ---------- Wire up main buttons ---------- */
   document.querySelectorAll(".btn-press").forEach((btn) => {
     btn.addEventListener("click", (e) => {
@@ -867,11 +885,11 @@
       vibrate();
     });
   });
- 
+
   document.querySelectorAll("[data-value]").forEach((btn) => {
     btn.addEventListener("click", () => appendToDisplay(btn.getAttribute("data-value")));
   });
- 
+
   document.querySelectorAll("[data-action]").forEach((btn) => {
     const action = btn.getAttribute("data-action");
     btn.addEventListener("click", () => {
@@ -880,7 +898,7 @@
       else if (action === "equals") calculate();
     });
   });
- 
+
   /* ---------- Keyboard support + highlighting ---------- */
   const keyMap = {
     "+": '[data-value="+"]',
@@ -895,19 +913,19 @@
     "Escape": '[data-action="clear"]',
   };
   for (let i = 0; i <= 9; i++) keyMap[i.toString()] = `[data-value="${i}"]`;
- 
+
   function highlightKey(selector) {
     const btn = document.querySelector(selector);
     if (!btn) return;
     btn.classList.add("key-active");
     setTimeout(() => btn.classList.remove("key-active"), 100);
   }
- 
+
   document.addEventListener("keydown", function (event) {
     // don't hijack typing in the history search box
     if (event.target === historySearch) return;
     const key = event.key;
- 
+
     if (key >= "0" && key <= "9") {
       appendToDisplay(key);
       highlightKey(keyMap[key]);
@@ -953,11 +971,10 @@
       openShortcuts();
     }
   });
- 
+
   /* Initial load */
   loadState();
   updatePreview();
 </script>
 </body>
 </html>
- 
