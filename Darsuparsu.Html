@@ -713,4 +713,112 @@
   document.getElementById("copyBtn").addEventListener("click", () => {
     navigator.clipboard?.writeText(display.value).then(() => showToast("Copied " + display.value));
   });
+  /* ---------- Theme selector ---------- */
+  const themeToggle = document.getElementById("themeToggle");
+  const themePanel = document.getElementById("themePanel");
+  themeToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    themePanel.classList.toggle("open");
+  });
+  document.addEventListener("click", (e) => {
+    if (!themePanel.contains(e.target) && e.target !== themeToggle) {
+      themePanel.classList.remove("open");
+    }
+  });
+  document.querySelectorAll("[data-theme-choice]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const theme = btn.getAttribute("data-theme-choice");
+      document.body.dataset.theme = theme;
+      themePanel.classList.remove("open");
+      showToast("Theme: " + theme.charAt(0).toUpperCase() + theme.slice(1));
+      saveState();
+    });
+  });
+ 
+  /* ---------- Degree / Radian toggle ---------- */
+  angleModeBtn.addEventListener("click", () => {
+    angleMode = angleMode === "DEG" ? "RAD" : "DEG";
+    angleModeBtn.textContent = angleMode;
+    showToast("Angle mode: " + angleMode);
+    saveState();
+  });
+ 
+  /* ---------- Keyboard shortcuts modal ---------- */
+  const shortcutsModal = document.getElementById("shortcutsModal");
+  function openShortcuts() {
+    shortcutsModal.classList.remove("hidden");
+    shortcutsModal.classList.add("flex");
+  }
+  function closeShortcuts() {
+    shortcutsModal.classList.add("hidden");
+    shortcutsModal.classList.remove("flex");
+  }
+  document.getElementById("shortcutsBtn").addEventListener("click", openShortcuts);
+  document.getElementById("closeShortcuts").addEventListener("click", closeShortcuts);
+  shortcutsModal.addEventListener("click", (e) => {
+    if (e.target === shortcutsModal) closeShortcuts();
+  });
+ 
+  /* ---------- Scientific panel toggle ---------- */
+  const sciRow = document.getElementById("sciRow");
+  document.getElementById("sciToggle").addEventListener("click", () => {
+    sciRow.classList.toggle("hidden");
+ 
+    if (!sciRow.classList.contains("hidden")) {
+      sciRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  });
+ 
+  function factorial(n) {
+    if (n < 0 || !Number.isInteger(n)) return NaN;
+    if (n > 170) return Infinity;
+    let r = 1;
+    for (let i = 2; i <= n; i++) r *= i;
+    return r;
+  }
+ 
+  document.querySelectorAll("[data-sci]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const fn = btn.getAttribute("data-sci");
+      try {
+        let current = display.value === "0" ? "" : display.value;
+        let val = parseFloat(current || "0");
+        const angleVal = angleMode === "DEG" ? (val * Math.PI) / 180 : val;
+        let result;
+        let label;
+        switch (fn) {
+          case "sqrt":
+            if (val < 0) return showError("Negative Square Root");
+            result = Math.sqrt(val); label = `√(${val})`; break;
+          case "sq": result = val * val; label = `${val}²`; break;
+          case "cube": result = val * val * val; label = `${val}³`; break;
+          case "sin": result = Math.sin(angleVal); label = `sin(${val}${angleMode === "DEG" ? "°" : ""})`; break;
+          case "cos": result = Math.cos(angleVal); label = `cos(${val}${angleMode === "DEG" ? "°" : ""})`; break;
+          case "tan": result = Math.tan(angleVal); label = `tan(${val}${angleMode === "DEG" ? "°" : ""})`; break;
+          case "log":
+            if (val <= 0) return showError("Invalid Input");
+            result = Math.log10(val); label = `log(${val})`; break;
+          case "ln":
+            if (val <= 0) return showError("Invalid Input");
+            result = Math.log(val); label = `ln(${val})`; break;
+          case "exp": result = Math.exp(val); label = `e^${val}`; break;
+          case "inv":
+            if (val === 0) return showError("Division by Zero");
+            result = 1 / val; label = `1/${val}`; break;
+          case "fact":
+            if (val < 0) return showError("Invalid Input");
+            result = factorial(val); label = `${val}!`; break;
+          case "abs": result = Math.abs(val); label = `|${val}|`; break;
+          case "pow10": result = Math.pow(10, val); label = `10^${val}`; break;
+          case "rand": appendToDisplay(Math.random().toFixed(6)); return;
+          case "floor": result = Math.floor(val); label = `floor(${val})`; break;
+          case "ceil": result = Math.ceil(val); label = `ceil(${val})`; break;
+          case "round": result = Math.round(val); label = `round(${val})`; break;
+          case "pi": appendToDisplay(Math.PI.toFixed(6)); return;
+          case "e": appendToDisplay(Math.E.toFixed(6)); return;
+        }
+        if (isNaN(result)) return showError("Invalid Expression");
+        if (result === Infinity || result === -Infinity) return showError("Division by Zero");
+        recordResult(label, result);
+      } catch (e) 
  
